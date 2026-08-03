@@ -1,0 +1,77 @@
+suite: Validation
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should fail on invalid workload type
+    set:
+      workload.type: invalid
+    asserts:
+      - failedTemplate: {}
+
+  - it: should fail when both ingress and route are enabled
+    set:
+      ingress.enabled: true
+      route.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "ingress.enabled and route.enabled cannot both be true — pick one"
+
+  - it: should fail when HPA is enabled for daemonset
+    set:
+      workload.type: daemonset
+      hpa.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "hpa is not supported for daemonset workloads"
+
+  - it: should accept deployment type
+    set:
+      workload.type: deployment
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: should accept statefulset type (no deployment rendered)
+    set:
+      workload.type: statefulset
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should accept daemonset type (no deployment rendered)
+    set:
+      workload.type: daemonset
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should accept none type (no deployment rendered)
+    set:
+      workload.type: none
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should fail when HPA is enabled for none workload
+    set:
+      workload.type: none
+      hpa.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "hpa is not supported when workload.type is none (no pods to scale)"
+
+  - it: should fail when VPA is enabled for none workload
+    set:
+      workload.type: none
+      vpa.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "vpa is not supported when workload.type is none (no pods to resize)"
+
+  - it: should fail when PDB is enabled for none workload
+    set:
+      workload.type: none
+      pdb.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "pdb is not supported when workload.type is none (no pods to protect)"

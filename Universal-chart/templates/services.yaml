@@ -1,0 +1,52 @@
+{{/*
+Extra Services beyond the primary one (.Values.service) — MAP-BASED, keyed by
+service name. Use when a microservice needs more than one Service object
+(e.g. a public ClusterIP plus a headless one, or an admin-only NodePort).
+*/}}
+{{- range $name, $spec := .Values.services }}
+{{- if $spec.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "universal-chart.labels" $ | nindent 4 }}
+    {{- with $spec.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with merge ($.Values.commonAnnotations | default dict) ($spec.annotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ $spec.type | default "ClusterIP" }}
+  {{- with $spec.clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
+  {{- with $spec.externalName }}
+  externalName: {{ . }}
+  {{- end }}
+  {{- if hasKey $spec "publishNotReadyAddresses" }}
+  publishNotReadyAddresses: {{ $spec.publishNotReadyAddresses }}
+  {{- end }}
+  ports:
+    {{- range $pname, $pspec := $spec.ports }}
+    - name: {{ $pname }}
+      port: {{ $pspec.port }}
+      targetPort: {{ $pspec.targetPort | default $pname }}
+      protocol: {{ $pspec.protocol | default "TCP" }}
+      {{- with $pspec.nodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+    {{- end }}
+  {{- if ne ($spec.type | default "ClusterIP") "ExternalName" }}
+  selector:
+    {{- with $spec.selector }}
+    {{- toYaml . | nindent 4 }}
+    {{- else }}
+    {{- include "universal-chart.selectorLabels" $ | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,271 @@
+suite: SCC (SecurityContextConstraints)
+templates:
+  - templates/scc.yaml
+
+tests:
+  # ─── defaults ────────────────────────────────────────────
+  - it: should not render when scc is empty
+    set:
+      workload.type: deployment
+      scc: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # ─── basic SCC ───────────────────────────────────────────
+  - it: should render SCC with correct apiVersion and kind
+    set:
+      workload.type: deployment
+      scc:
+        restricted-custom:
+          allowPrivilegedContainer: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isAPIVersion:
+          of: security.openshift.io/v1
+      - isKind:
+          of: SecurityContextConstraints
+      - equal:
+          path: metadata.name
+          value: restricted-custom
+
+  - it: should set allowPrivilegedContainer
+    set:
+      workload.type: deployment
+      scc:
+        privileged-scc:
+          allowPrivilegedContainer: true
+    asserts:
+      - equal:
+          path: allowPrivilegedContainer
+          value: true
+
+  - it: should set allowPrivilegeEscalation
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          allowPrivilegeEscalation: true
+    asserts:
+      - equal:
+          path: allowPrivilegeEscalation
+          value: true
+
+  - it: should default allowPrivilegeEscalation to false
+    set:
+      workload.type: deployment
+      scc:
+        my-scc: {}
+    asserts:
+      - equal:
+          path: allowPrivilegeEscalation
+          value: false
+
+  # ─── runAsUser strategy ─────────────────────────────────
+  - it: should set runAsUser strategy
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          runAsUser:
+            type: MustRunAsNonRoot
+    asserts:
+      - equal:
+          path: runAsUser.type
+          value: MustRunAsNonRoot
+
+  - it: should default runAsUser to MustRunAsRange
+    set:
+      workload.type: deployment
+      scc:
+        my-scc: {}
+    asserts:
+      - equal:
+          path: runAsUser.type
+          value: MustRunAsRange
+
+  # ─── volumes ────────────────────────────────────────────
+  - it: should set custom volumes list
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          volumes:
+            - configMap
+            - emptyDir
+            - secret
+    asserts:
+      - equal:
+          path: volumes
+          value:
+            - configMap
+            - emptyDir
+            - secret
+
+  - it: should set default volumes when not specified
+    set:
+      workload.type: deployment
+      scc:
+        my-scc: {}
+    asserts:
+      - equal:
+          path: volumes
+          value:
+            - configMap
+            - downwardAPI
+            - emptyDir
+            - persistentVolumeClaim
+            - projected
+            - secret
+
+  # ─── capabilities ──────────────────────────────────────
+  - it: should set requiredDropCapabilities
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          requiredDropCapabilities:
+            - KILL
+            - MKNOD
+            - SYS_CHROOT
+    asserts:
+      - equal:
+          path: requiredDropCapabilities
+          value:
+            - KILL
+            - MKNOD
+            - SYS_CHROOT
+
+  - it: should default requiredDropCapabilities to ALL
+    set:
+      workload.type: deployment
+      scc:
+        my-scc: {}
+    asserts:
+      - equal:
+          path: requiredDropCapabilities
+          value:
+            - ALL
+
+  # ─── host access ────────────────────────────────────────
+  - it: should set host access flags
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          allowHostNetwork: true
+          allowHostPorts: true
+          allowHostPID: true
+          allowHostIPC: true
+    asserts:
+      - equal:
+          path: allowHostNetwork
+          value: true
+      - equal:
+          path: allowHostPorts
+          value: true
+      - equal:
+          path: allowHostPID
+          value: true
+      - equal:
+          path: allowHostIPC
+          value: true
+
+  # ─── users and groups ──────────────────────────────────
+  - it: should set users and groups
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          users:
+            - system:serviceaccount:myns:mysa
+          groups:
+            - system:authenticated
+    asserts:
+      - equal:
+          path: users
+          value:
+            - system:serviceaccount:myns:mysa
+      - equal:
+          path: groups
+          value:
+            - system:authenticated
+
+  # ─── multiple SCCs ─────────────────────────────────────
+  - it: should render multiple SCCs
+    set:
+      workload.type: deployment
+      scc:
+        restricted-custom:
+          allowPrivilegedContainer: false
+        privileged-custom:
+          allowPrivilegedContainer: true
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  # ─── fsGroup and supplementalGroups ────────────────────
+  - it: should set fsGroup and supplementalGroups strategies
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          fsGroup:
+            type: MustRunAs
+            ranges:
+              - min: 1000
+                max: 2000
+          supplementalGroups:
+            type: MustRunAs
+            ranges:
+              - min: 1000
+                max: 2000
+    asserts:
+      - equal:
+          path: fsGroup.type
+          value: MustRunAs
+      - equal:
+          path: fsGroup.ranges
+          value:
+            - min: 1000
+              max: 2000
+      - equal:
+          path: supplementalGroups.type
+          value: MustRunAs
+
+  # ─── readOnlyRootFilesystem ────────────────────────────
+  - it: should set readOnlyRootFilesystem
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: readOnlyRootFilesystem
+          value: true
+
+  # ─── priority ──────────────────────────────────────────
+  - it: should set priority
+    set:
+      workload.type: deployment
+      scc:
+        my-scc:
+          priority: 10
+    asserts:
+      - equal:
+          path: priority
+          value: 10
+
+  # ─── labels ────────────────────────────────────────────
+  - it: should include chart labels
+    set:
+      workload.type: deployment
+      scc:
+        my-scc: {}
+    asserts:
+      - isNotNull:
+          path: metadata.labels["app.kubernetes.io/name"]
+      - isNotNull:
+          path: metadata.labels["app.kubernetes.io/instance"]

@@ -1,0 +1,55 @@
+{{/*
+Extra OpenShift Routes beyond the primary one (.Values.route) — MAP-BASED,
+keyed by route name. Use when a microservice fronts more than one hostname/
+path off the same (or a different) backing Service.
+*/}}
+{{- range $name, $spec := .Values.routes }}
+{{- if $spec.enabled }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "universal-chart.labels" $ | nindent 4 }}
+  {{- with merge ($.Values.commonAnnotations | default dict) ($spec.annotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $spec.host }}
+  host: {{ . }}
+  {{- end }}
+  {{- with $spec.path }}
+  path: {{ . }}
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ $spec.serviceName | default (include "universal-chart.fullname" $) }}
+    weight: 100
+  port:
+    targetPort: {{ $spec.targetPort | default (include "universal-chart.firstKey" $.Values.service.ports) }}
+  {{- if $spec.tls }}
+  tls:
+    termination: {{ $spec.tls.termination | default "edge" }}
+    insecureEdgeTerminationPolicy: {{ $spec.tls.insecureEdgeTerminationPolicy | default "Redirect" }}
+    {{- with $spec.tls.certificate }}
+    certificate: |
+      {{- . | nindent 6 }}
+    {{- end }}
+    {{- with $spec.tls.key }}
+    key: |
+      {{- . | nindent 6 }}
+    {{- end }}
+    {{- with $spec.tls.caCertificate }}
+    caCertificate: |
+      {{- . | nindent 6 }}
+    {{- end }}
+    {{- with $spec.tls.destinationCACertificate }}
+    destinationCACertificate: |
+      {{- . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  wildcardPolicy: {{ $spec.wildcardPolicy | default "None" }}
+{{- end }}
+{{- end }}

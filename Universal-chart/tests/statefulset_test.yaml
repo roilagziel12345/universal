@@ -1,0 +1,102 @@
+suite: StatefulSet
+templates:
+  - templates/statefulset.yaml
+tests:
+  - it: should not render by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when workload type is statefulset
+    set:
+      workload.type: statefulset
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-universal-chart
+
+  - it: should set serviceName to fullname
+    set:
+      workload.type: statefulset
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: RELEASE-NAME-universal-chart
+
+  - it: should set podManagementPolicy
+    set:
+      workload.type: statefulset
+      podManagementPolicy: Parallel
+    asserts:
+      - equal:
+          path: spec.podManagementPolicy
+          value: Parallel
+
+  - it: should default podManagementPolicy to OrderedReady
+    set:
+      workload.type: statefulset
+    asserts:
+      - equal:
+          path: spec.podManagementPolicy
+          value: OrderedReady
+
+  - it: should set replicas
+    set:
+      workload.type: statefulset
+      replicaCount: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: should omit replicas when HPA is enabled
+    set:
+      workload.type: statefulset
+      hpa.enabled: true
+    asserts:
+      - isNull:
+          path: spec.replicas
+
+  - it: should set updateStrategy
+    set:
+      workload.type: statefulset
+      strategy:
+        type: OnDelete
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: OnDelete
+
+  - it: should set volumeClaimTemplates
+    set:
+      workload.type: statefulset
+      volumeClaimTemplates:
+        data:
+          accessModes: [ReadWriteOnce]
+          size: 20Gi
+          storageClassName: fast-ssd
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: data
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
+          value: 20Gi
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.storageClassName
+          value: fast-ssd
+
+  - it: should set volumeClaimTemplate volumeMode
+    set:
+      workload.type: statefulset
+      volumeClaimTemplates:
+        data:
+          accessModes: [ReadWriteOnce]
+          size: 10Gi
+          volumeMode: Block
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.volumeMode
+          value: Block

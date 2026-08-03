@@ -1,0 +1,119 @@
+suite: CronJob
+templates:
+  - templates/cronjob.yaml
+tests:
+  - it: should not render when no cronjobs defined
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a cronjob
+    set:
+      cronjobs:
+        backup:
+          schedule: "0 2 * * *"
+          jobTemplate:
+            command: ["/bin/backup.sh"]
+    asserts:
+      - isKind:
+          of: CronJob
+      - equal:
+          path: spec.schedule
+          value: "0 2 * * *"
+
+  - it: should set concurrency policy
+    set:
+      cronjobs:
+        test:
+          schedule: "*/5 * * * *"
+          concurrencyPolicy: Replace
+          jobTemplate:
+            command: ["echo", "test"]
+    asserts:
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Replace
+
+  - it: should default concurrencyPolicy to Forbid
+    set:
+      cronjobs:
+        test:
+          schedule: "*/5 * * * *"
+          jobTemplate:
+            command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Forbid
+
+  - it: should set history limits
+    set:
+      cronjobs:
+        test:
+          schedule: "0 0 * * *"
+          successfulJobsHistoryLimit: 5
+          failedJobsHistoryLimit: 3
+          jobTemplate:
+            command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.successfulJobsHistoryLimit
+          value: 5
+      - equal:
+          path: spec.failedJobsHistoryLimit
+          value: 3
+
+  - it: should set backoff limit
+    set:
+      cronjobs:
+        test:
+          schedule: "0 0 * * *"
+          jobTemplate:
+            backoffLimit: 5
+            command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.backoffLimit
+          value: 5
+
+  - it: should use custom image in job
+    set:
+      cronjobs:
+        test:
+          schedule: "0 0 * * *"
+          jobTemplate:
+            image:
+              repository: custom/image
+              tag: "2.0"
+            command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: "custom/image:2.0"
+
+  - it: should render multiple cronjobs
+    set:
+      cronjobs:
+        job1:
+          schedule: "0 0 * * *"
+          jobTemplate:
+            command: ["echo", "1"]
+        job2:
+          schedule: "0 12 * * *"
+          jobTemplate:
+            command: ["echo", "2"]
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should prepend fullname to cronjob name
+    set:
+      cronjobs:
+        backup:
+          schedule: "0 2 * * *"
+          jobTemplate:
+            command: ["/bin/backup.sh"]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-universal-chart-backup

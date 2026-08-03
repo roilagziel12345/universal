@@ -1,0 +1,49 @@
+{{- with .Values.route }}
+{{- if .enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "universal-chart.fullname" $ }}
+  labels:
+    {{- include "universal-chart.labels" $ | nindent 4 }}
+  {{- with merge ($.Values.commonAnnotations | default dict) (.annotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .host }}
+  host: {{ . }}
+  {{- end }}
+  {{- with .path }}
+  path: {{ . }}
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ include "universal-chart.fullname" $ }}
+    weight: 100
+  port:
+    targetPort: {{ .targetPort | default (include "universal-chart.firstKey" $.Values.service.ports) }}
+  {{- if .tls }}
+  tls:
+    termination: {{ .tls.termination | default "edge" }}
+    insecureEdgeTerminationPolicy: {{ .tls.insecureEdgeTerminationPolicy | default "Redirect" }}
+    {{- with .tls.certificate }}
+    certificate: |
+      {{- . | nindent 6 }}
+    {{- end }}
+    {{- with .tls.key }}
+    key: |
+      {{- . | nindent 6 }}
+    {{- end }}
+    {{- with .tls.caCertificate }}
+    caCertificate: |
+      {{- . | nindent 6 }}
+    {{- end }}
+    {{- with .tls.destinationCACertificate }}
+    destinationCACertificate: |
+      {{- . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  wildcardPolicy: {{ .wildcardPolicy | default "None" }}
+{{- end }}
+{{- end }}

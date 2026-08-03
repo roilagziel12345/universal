@@ -1,0 +1,19 @@
+# env/dev/clusters/mng-1/cluster.yaml
+# Cluster-specific settings for mng-1 in dev.
+# Only contains what's specific to this cluster.
+
+commonLabels:
+  cluster: mng-1
+  env: dev
+
+# Cluster-specific storage
+storageClasses:
+  - name: fast-ssd
+    provisioner: openshift-storage.cephfs.csi.ceph.com
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    allowVolumeExpansion: true
+
+# Cluster domain for routes
+route:
+  host: ""   # empty = OpenShift auto-assigns under *.apps.mng-1.example.com

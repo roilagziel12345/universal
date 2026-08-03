@@ -1,0 +1,17 @@
+{{/*
+extraDeploy — inject any raw Kubernetes YAML, with full Helm templating support.
+
+Usage in values.yaml:
+  extraDeploy:
+    - |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ .Release.Name }}-special
+      data:
+        key: value
+*/}}
+{{- range .Values.extraDeploy }}
+---
+{{ tpl . $ }}
+{{- end }}

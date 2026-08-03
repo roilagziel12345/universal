@@ -1,0 +1,41 @@
+# env/dev/clusters/mng-1/apps/backend.yaml
+
+image:
+  tag: "dev-latest"
+
+secrets:
+  - name: backend-secret
+    stringData:
+      DB_PASSWORD: "dev-password"
+      DB_HOST: "postgres-dev.mng-1.svc"
+
+# Override config for dev
+configMaps:
+  - name: backend-config
+    data:
+      LOG_LEVEL: debug
+      DB_NAME: backend_dev
+
+# Multi PVC example — backend needs data + logs volumes
+pvc:
+  - name: backend-data
+    accessModes: [ReadWriteOnce]
+    size: 10Gi
+    storageClassName: fast-ssd
+  - name: backend-logs
+    accessModes: [ReadWriteOnce]
+    size: 2Gi
+
+volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: backend-data
+  - name: logs
+    persistentVolumeClaim:
+      claimName: backend-logs
+
+volumeMounts:
+  - name: data
+    mountPath: /var/data
+  - name: logs
+    mountPath: /var/log/backend

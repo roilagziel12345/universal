@@ -1,0 +1,26 @@
+# env/dev/clusters/mng-1/apps/worker.yaml
+
+image:
+  tag: "dev-latest"
+
+env:
+  - name: QUEUE_URL
+    value: redis://redis-dev:6379
+  - name: LOG_LEVEL
+    value: debug
+
+# StatefulSet multi-volumeClaimTemplates — one per pod, auto-provisioned
+volumeClaimTemplates:
+  - name: queue-data
+    accessModes: [ReadWriteOnce]
+    size: 2Gi              # smaller in dev
+    storageClassName: fast-ssd
+  - name: worker-scratch
+    accessModes: [ReadWriteOnce]
+    size: 1Gi
+
+volumeMounts:
+  - name: queue-data
+    mountPath: /var/queue
+  - name: worker-scratch
+    mountPath: /tmp/scratch

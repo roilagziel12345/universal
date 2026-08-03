@@ -1,0 +1,29 @@
+{{- range $name, $spec := .Values.storageClasses }}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "universal-chart.labels" $ | nindent 4 }}
+  {{- with merge ($.Values.commonAnnotations | default dict) ($spec.annotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+provisioner: {{ $spec.provisioner }}
+reclaimPolicy: {{ $spec.reclaimPolicy | default "Delete" }}
+volumeBindingMode: {{ $spec.volumeBindingMode | default "WaitForFirstConsumer" }}
+allowVolumeExpansion: {{ $spec.allowVolumeExpansion | default true }}
+{{- with $spec.parameters }}
+parameters:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $spec.mountOptions }}
+mountOptions:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $spec.allowedTopologies }}
+allowedTopologies:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}

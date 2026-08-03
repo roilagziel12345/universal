@@ -1,0 +1,53 @@
+suite: PersistentVolume
+templates:
+  - templates/pv.yaml
+tests:
+  - it: should not render when no PVs defined
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a PV
+    set:
+      persistentVolumes:
+        my-pv:
+          capacity: 100Gi
+          accessModes: [ReadWriteOnce]
+          hostPath:
+            path: /mnt/data
+    asserts:
+      - isKind:
+          of: PersistentVolume
+      - equal:
+          path: metadata.name
+          value: my-pv
+      - equal:
+          path: spec.capacity.storage
+          value: 100Gi
+
+  - it: should default reclaim policy to Retain
+    set:
+      persistentVolumes:
+        test:
+          capacity: 10Gi
+          accessModes: [ReadWriteOnce]
+          hostPath:
+            path: /mnt
+    asserts:
+      - equal:
+          path: spec.persistentVolumeReclaimPolicy
+          value: Retain
+
+  - it: should set NFS source
+    set:
+      persistentVolumes:
+        nfs-pv:
+          capacity: 50Gi
+          accessModes: [ReadWriteMany]
+          nfs:
+            server: nfs.example.com
+            path: /exports
+    asserts:
+      - equal:
+          path: spec.nfs.server
+          value: nfs.example.com

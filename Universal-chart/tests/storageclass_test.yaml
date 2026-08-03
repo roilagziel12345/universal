@@ -1,0 +1,52 @@
+suite: StorageClass
+templates:
+  - templates/storageclass.yaml
+tests:
+  - it: should not render when no storage classes defined
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a storage class
+    set:
+      storageClasses:
+        fast-ssd:
+          provisioner: ebs.csi.aws.com
+    asserts:
+      - isKind:
+          of: StorageClass
+      - equal:
+          path: metadata.name
+          value: fast-ssd
+      - equal:
+          path: provisioner
+          value: ebs.csi.aws.com
+
+  - it: should set defaults
+    set:
+      storageClasses:
+        test:
+          provisioner: test.csi
+    asserts:
+      - equal:
+          path: reclaimPolicy
+          value: Delete
+      - equal:
+          path: volumeBindingMode
+          value: WaitForFirstConsumer
+      - equal:
+          path: allowVolumeExpansion
+          value: true
+
+  - it: should set parameters
+    set:
+      storageClasses:
+        test:
+          provisioner: ebs.csi.aws.com
+          parameters:
+            type: gp3
+            encrypted: "true"
+    asserts:
+      - equal:
+          path: parameters.type
+          value: gp3

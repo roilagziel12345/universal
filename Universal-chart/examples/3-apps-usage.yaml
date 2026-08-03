@@ -1,0 +1,169 @@
+# Universal Chart — 3-App Usage Example
+# 
+# Setup: You have an ApplicationSet in Argo CD pointing to your `apps` gitops repo.
+# Each app has its own values file under apps/values/<app-name>/values.yaml
+# and all three use the same universal-chart.
+#
+# apps/
+# ├── values/
+# │   ├── frontend/values.yaml
+# │   ├── backend/values.yaml
+# │   └── worker/values.yaml
+# └── applicationset.yaml
+
+# ─────────────────────────────────────────────────────────────────
+# apps/values/frontend/values.yaml
+# ─────────────────────────────────────────────────────────────────
+# image:
+#   repository: my-registry/frontend
+#   tag: "1.0.0"
+#
+# ports:
+#   - name: http
+#     containerPort: 3000
+#
+# service:
+#   enabled: true
+#   ports:
+#     - name: http
+#       port: 80
+#       targetPort: http
+#
+# # OpenShift Route
+# route:
+#   enabled: true
+#   host: frontend.apps.cluster.example.com
+#   tls:
+#     termination: edge
+#
+# env:
+#   - name: API_URL
+#     value: http://backend
+#
+# resources:
+#   requests:
+#     cpu: 100m
+#     memory: 128Mi
+
+# ─────────────────────────────────────────────────────────────────
+# apps/values/backend/values.yaml
+# ─────────────────────────────────────────────────────────────────
+# image:
+#   repository: my-registry/backend
+#   tag: "2.1.0"
+#
+# ports:
+#   - name: http
+#     containerPort: 8080
+#
+# service:
+#   enabled: true
+#   ports:
+#     - name: http
+#       port: 80
+#       targetPort: http
+#
+# replicaCount: 2
+#
+# envFrom:
+#   - secretRef:
+#       name: backend-db-secret
+#
+# secrets:
+#   - name: backend-db-secret
+#     stringData:
+#       DATABASE_URL: "postgres://user:pass@postgres:5432/mydb"
+#
+# configMaps:
+#   - name: backend-config
+#     data:
+#       LOG_LEVEL: info
+#       CACHE_TTL: "300"
+#
+# livenessProbe:
+#   httpGet:
+#     path: /healthz
+#     port: http
+#
+# hpa:
+#   enabled: true
+#   minReplicas: 2
+#   maxReplicas: 5
+#   metrics:
+#     - type: Resource
+#       resource:
+#         name: cpu
+#         target:
+#           type: Utilization
+#           averageUtilization: 70
+
+# ─────────────────────────────────────────────────────────────────
+# apps/values/worker/values.yaml
+# ─────────────────────────────────────────────────────────────────
+# image:
+#   repository: my-registry/worker
+#   tag: "2.1.0"
+#
+# service:
+#   enabled: false   # worker doesn't need a Service
+#
+# command: ["python", "worker.py"]
+#
+# env:
+#   - name: QUEUE_URL
+#     value: redis://redis:6379
+#
+# # Scheduled maintenance job
+# cronjobs:
+#   - name: cleanup
+#     schedule: "0 3 * * *"
+#     jobTemplate:
+#       restartPolicy: OnFailure
+#       command: ["python", "cleanup.py"]
+#
+# # Anything not in the chart — inject raw YAML
+# extraDeploy:
+#   - |
+#     apiVersion: v1
+#     kind: ConfigMap
+#     metadata:
+#       name: {{ .Release.Name }}-worker-extra
+#     data:
+#       special-flag: "true"
+
+# ─────────────────────────────────────────────────────────────────
+# apps/applicationset.yaml  (Argo CD ApplicationSet)
+# ─────────────────────────────────────────────────────────────────
+# apiVersion: argoproj.io/v1alpha1
+# kind: ApplicationSet
+# metadata:
+#   name: platform-apps
+#   namespace: argocd
+# spec:
+#   generators:
+#     - git:
+#         repoURL: https://git.example.com/gitops/apps.git
+#         revision: main
+#         directories:
+#           - path: values/*
+#   template:
+#     metadata:
+#       name: "{{path.basename}}"
+#     spec:
+#       project: default
+#       source:
+#         repoURL: https://git.example.com/gitops/platform.git
+#         targetRevision: main
+#         path: charts/universal-chart
+#         helm:
+#           valueFiles:
+#             - https://git.example.com/gitops/apps.git/values/{{path.basename}}/values.yaml
+#       destination:
+#         server: https://kubernetes.default.svc
+#         namespace: "{{path.basename}}"
+#       syncPolicy:
+#         automated:
+#           prune: true
+#           selfHeal: true
+#         syncOptions:
+#           - CreateNamespace=true

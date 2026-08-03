@@ -1,0 +1,26 @@
+# _base/apps/frontend.yaml
+# App identity — unchanged across all envs/clusters.
+# Only image, ports, service type: things that define what this app IS.
+
+image:
+  repository: my-registry/frontend
+
+workload:
+  type: deployment
+
+ports:
+  - name: http
+    containerPort: 3000
+
+service:
+  enabled: true
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+
+route:
+  enabled: true
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

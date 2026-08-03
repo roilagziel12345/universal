@@ -1,0 +1,23 @@
+# _base/apps/worker.yaml
+image:
+  repository: my-registry/worker
+
+workload:
+  type: statefulset
+
+service:
+  enabled: false     # worker has no HTTP interface
+
+command: ["python", "worker.py"]
+
+volumeClaimTemplates:
+  - name: queue-data
+    accessModes: [ReadWriteOnce]
+    size: 5Gi
+
+cronjobs:
+  - name: cleanup
+    schedule: "0 3 * * *"
+    jobTemplate:
+      restartPolicy: OnFailure
+      command: ["python", "cleanup.py"]

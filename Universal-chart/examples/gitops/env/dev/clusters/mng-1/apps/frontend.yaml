@@ -1,0 +1,17 @@
+# env/dev/clusters/mng-1/apps/frontend.yaml
+# frontend on mng-1/dev — only what differs from the layers above.
+# All base identity + dev resources + mng-1 cluster settings are inherited.
+
+image:
+  tag: "dev-latest"    # override image tag for dev
+
+env:
+  - name: API_URL
+    value: "http://backend"
+  - name: NODE_ENV
+    value: "development"
+  - name: DEBUG
+    value: "true"
+
+route:
+  host: frontend.apps.mng-1.dev.example.com

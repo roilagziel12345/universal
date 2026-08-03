@@ -1,0 +1,654 @@
+# =============================================================================
+# EXAMPLE 2 — PostgreSQL StatefulSet Database
+# Tests: workload=statefulset, volumeClaimTemplates, headless service,
+#        OpenShift Route, PV, StatefulSet-specific strategy, RBAC,
+#        NetworkPolicy, PDB, VPA, StorageClass, CronJob backup, Jobs
+# =============================================================================
+
+# ----- Global metadata -------------------------------------------------------
+nameOverride: "postgres"
+fullnameOverride: ""
+
+commonLabels:
+  team: data
+  environment: production
+  tier: database
+
+commonAnnotations:
+  owner: "data-team@example.com"
+
+# ----- Workload --------------------------------------------------------------
+workload:
+  type: statefulset
+
+replicaCount: 3
+revisionHistoryLimit: 3
+podManagementPolicy: OrderedReady
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    partition: 0
+
+# ----- Image -----------------------------------------------------------------
+image:
+  repository: postgres
+  tag: "16.2"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: registry-credentials
+
+# ----- Pod metadata ----------------------------------------------------------
+podAnnotations:
+  reloader.stakater.com/auto: "true"
+
+podLabels:
+  db: postgres
+  version: "16"
+
+# ----- Security contexts -----------------------------------------------------
+podSecurityContext:
+  fsGroup: 999
+  fsGroupChangePolicy: OnRootMismatch
+  runAsNonRoot: true
+  runAsUser: 999
+  runAsGroup: 999
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false   # postgres needs to write to /var/lib/postgresql
+  runAsNonRoot: true
+  runAsUser: 999
+  capabilities:
+    drop: [ALL]
+
+# ----- Main container spec ---------------------------------------------------
+command: []
+args: []
+workingDir: ""
+
+terminationMessagePath: /dev/termination-log
+terminationMessagePolicy: FallbackToLogsOnError
+
+# ----- Ports -----------------------------------------------------------------
+ports:
+  - name: postgres
+    containerPort: 5432
+    protocol: TCP
+
+# ----- Environment variables -----------------------------------------------------------------
+env:
+  - name: POSTGRES_DB
+    valueFrom:
+      configMapKeyRef:
+        name: postgres-config
+        key: POSTGRES_DB
+  - name: POSTGRES_USER
+    valueFrom:
+      secretKeyRef:
+        name: postgres-secret
+        key: POSTGRES_USER
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: postgres-secret
+        key: POSTGRES_PASSWORD
+  - name: PGDATA
+    value: /var/lib/postgresql/data/pgdata
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+
+envFrom:
+  - configMapRef:
+      name: postgres-config
+
+# ----- Resources -------------------------------------------------------------
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2
+    memory: 2Gi
+
+# ----- Probes ----------------------------------------------------------------
+livenessProbe:
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - pg_isready -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - pg_isready -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+
+startupProbe:
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - pg_isready -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+  failureThreshold: 30
+  periodSeconds: 10
+
+# ----- Lifecycle hooks -------------------------------------------------------
+lifecycle:
+  preStop:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - pg_ctl stop -D $PGDATA -m fast
+
+# ----- Volume Mounts ---------------------------------------------------------
+volumeMounts:
+  - name: data
+    mountPath: /var/lib/postgresql/data
+  - name: config-vol
+    mountPath: /etc/postgresql/conf.d
+    readOnly: true
+  - name: init-scripts
+    mountPath: /docker-entrypoint-initdb.d
+    readOnly: true
+  - name: tmp-dir
+    mountPath: /tmp
+  - name: run-dir
+    mountPath: /var/run/postgresql
+
+volumes:
+  - name: config-vol
+    configMap:
+      name: postgres-config
+      items:
+        - key: postgresql.conf
+          path: custom.conf
+  - name: init-scripts
+    configMap:
+      name: postgres-init-scripts
+  - name: tmp-dir
+    emptyDir: {}
+  - name: run-dir
+    emptyDir: {}
+
+# ----- Init containers -------------------------------------------------------
+initContainers:
+  - name: init-permissions
+    image: busybox:1.36
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /var/lib/postgresql/data/pgdata
+        chown -R 999:999 /var/lib/postgresql/data
+        chmod 700 /var/lib/postgresql/data/pgdata
+    securityContext:
+      runAsUser: 0
+      runAsNonRoot: false
+    volumeMounts:
+      - name: data
+        mountPath: /var/lib/postgresql/data
+    resources:
+      requests:
+        cpu: 50m
+        memory: 32Mi
+
+# ----- Sidecars --------------------------------------------------------------
+sidecars:
+  - name: metrics-exporter
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    env:
+      - name: DATA_SOURCE_USER
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: POSTGRES_USER
+      - name: DATA_SOURCE_PASS
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: POSTGRES_PASSWORD
+      - name: DATA_SOURCE_URI
+        value: "localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+    ports:
+      - name: metrics
+        containerPort: 9187
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    securityContext:
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+
+# ----- Scheduling ------------------------------------------------------------
+nodeSelector:
+  kubernetes.io/os: linux
+  role: database
+
+tolerations:
+  - key: "database"
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: postgres
+        topologyKey: kubernetes.io/hostname
+
+topologySpreadConstraints: []
+
+# ----- Advanced pod settings -------------------------------------------------
+hostNetwork: false
+hostIPC: false
+hostPID: false
+shareProcessNamespace: false
+priorityClassName: "high-priority"
+runtimeClassName: ""
+schedulerName: ""
+restartPolicy: ""
+
+dnsPolicy: ClusterFirst
+dnsConfig: {}
+hostAliases: []
+readinessGates: []
+
+# ----- Service ---------------------------------------------------------------
+# StatefulSet needs a headless service for stable DNS (pod-0.postgres, pod-1.postgres, ...)
+service:
+  enabled: true
+  type: ClusterIP
+  clusterIP: None   # headless — required for StatefulSet stable DNS
+  publishNotReadyAddresses: true
+  annotations: {}
+  labels:
+    db: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+      protocol: TCP
+
+# ----- Ingress/Route ---------------------------------------------------------
+ingress:
+  enabled: false
+
+# OpenShift Route for pgAdmin UI (separate service — demo of Route template)
+route:
+  enabled: false
+  host: ""
+  path: ""
+  targetPort: "postgres"
+  annotations: {}
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+
+# ----- ConfigMaps ------------------------------------------------------------
+configMaps:
+  - name: postgres-config
+    annotations:
+      description: "PostgreSQL main configuration"
+    data:
+      POSTGRES_DB: myapp
+      postgresql.conf: |
+        max_connections = 200
+        shared_buffers = 256MB
+        effective_cache_size = 768MB
+        maintenance_work_mem = 64MB
+        checkpoint_completion_target = 0.9
+        wal_buffers = 16MB
+        default_statistics_target = 100
+        random_page_cost = 1.1
+        effective_io_concurrency = 200
+        work_mem = 1310kB
+        min_wal_size = 1GB
+        max_wal_size = 4GB
+        log_timezone = 'UTC'
+        datestyle = 'iso, mdy'
+        timezone = 'UTC'
+        lc_messages = 'en_US.utf8'
+        lc_monetary = 'en_US.utf8'
+        lc_numeric = 'en_US.utf8'
+        lc_time = 'en_US.utf8'
+
+  - name: postgres-init-scripts
+    data:
+      01-create-schema.sql: |
+        CREATE SCHEMA IF NOT EXISTS app;
+        GRANT ALL ON SCHEMA app TO myuser;
+      02-create-extensions.sql: |
+        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+        CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+
+# ----- Secrets ---------------------------------------------------------------
+secrets:
+  - name: postgres-secret
+    type: Opaque
+    annotations:
+      reloader.stakater.com/match: "true"
+    stringData:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: "supersecret-change-in-production"
+      PGPASSWORD: "supersecret-change-in-production"
+
+# ----- PVCs ------------------------------------------------------------------
+# No standalone PVC — StatefulSet uses volumeClaimTemplates for per-pod PVCs
+
+# ----- PersistentVolumes -----------------------------------------------------
+persistentVolumes: []
+
+# ----- StorageClasses --------------------------------------------------------
+storageClasses:
+  - name: postgres-ssd
+    provisioner: ebs.csi.aws.com
+    reclaimPolicy: Retain          # RETAIN for databases — never auto-delete data!
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      type: io2
+      iopsPerGB: "50"
+      encrypted: "true"
+
+# ----- StatefulSet volumeClaimTemplates (auto-provisioned PVC per pod) -------
+volumeClaimTemplates:
+  - name: data
+    accessModes: [ReadWriteOnce]
+    size: 50Gi
+    storageClassName: postgres-ssd
+    volumeMode: Filesystem
+
+# ----- Jobs ------------------------------------------------------------------
+jobs:
+  - name: db-init-check
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    backoffLimit: 5
+    activeDeadlineSeconds: 300
+    ttlSecondsAfterFinished: 3600
+    restartPolicy: OnFailure
+    image:
+      repository: postgres
+      tag: "16.2"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        until pg_isready -h postgres -p 5432 -U $POSTGRES_USER; do
+          echo "Waiting for postgres..."
+          sleep 2
+        done
+        echo "PostgreSQL is ready!"
+        psql -h postgres -U $POSTGRES_USER -d $POSTGRES_DB -c "\dt app.*"
+    envFrom:
+      - secretRef:
+          name: postgres-secret
+      - configMapRef:
+          name: postgres-config
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+# ----- CronJobs --------------------------------------------------------------
+cronjobs:
+  - name: pg-backup
+    schedule: "0 1 * * *"            # Every day at 01:00 UTC
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 7
+    failedJobsHistoryLimit: 3
+    suspend: false
+    startingDeadlineSeconds: 900
+    jobTemplate:
+      backoffLimit: 2
+      activeDeadlineSeconds: 7200
+      ttlSecondsAfterFinished: 86400
+      restartPolicy: OnFailure
+      image:
+        repository: postgres
+        tag: "16.2"
+      command:
+        - /bin/sh
+        - -c
+        - |
+          DATE=$(date +%Y%m%d-%H%M%S)
+          pg_dump -h postgres -U $POSTGRES_USER -d $POSTGRES_DB \
+            -Fc -Z 9 -f /backups/pg_dump_${DATE}.pgc
+          echo "Backup completed: pg_dump_${DATE}.pgc"
+      env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: PGPASSWORD
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_DB
+      resources:
+        requests:
+          cpu: 200m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      volumeMounts:
+        - name: backups
+          mountPath: /backups
+      volumes:
+        - name: backups
+          persistentVolumeClaim:
+            claimName: postgres-backups
+
+  - name: pg-vacuum
+    schedule: "0 3 * * 0"            # Every Sunday at 03:00 UTC
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 4
+    failedJobsHistoryLimit: 2
+    suspend: false
+    jobTemplate:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 43200
+      restartPolicy: OnFailure
+      image:
+        repository: postgres
+        tag: "16.2"
+      command:
+        - psql
+        - -h
+        - postgres
+        - -U
+        - $(POSTGRES_USER)
+        - -d
+        - $(POSTGRES_DB)
+        - -c
+        - VACUUM ANALYZE;
+      env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: PGPASSWORD
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_DB
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+# ----- ServiceAccount --------------------------------------------------------
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: false   # DB doesn't need k8s API access
+
+# ----- RBAC ------------------------------------------------------------------
+rbac:
+  roles:
+    - name: postgres-secret-reader
+      rules:
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["get"]
+          resourceNames: ["postgres-secret"]
+
+  roleBindings:
+    - name: postgres-secret-reader-rb
+      roleRef: postgres-secret-reader
+      subjects:
+        - kind: ServiceAccount
+          name: postgres-universal-chart
+          namespace: default
+
+  clusterRoles: []
+  clusterRoleBindings: []
+
+# ----- HPA -------------------------------------------------------------------
+# HPA is NOT recommended for StatefulSets with persistent storage
+hpa:
+  enabled: false
+
+# ----- PDB -------------------------------------------------------------------
+pdb:
+  enabled: true
+  maxUnavailable: 1   # For a 3-replica cluster, always keep 2 up
+
+# ----- NetworkPolicy ---------------------------------------------------------
+networkPolicies:
+  - name: postgres-allow-app
+    podSelector:
+      matchLabels:
+        app.kubernetes.io/name: postgres
+    policyTypes: [Ingress, Egress]
+    ingress:
+      - from:
+          - podSelector:
+              matchLabels:
+                db-client: postgres
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: default
+        ports:
+          - protocol: TCP
+            port: 5432
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: monitoring
+        ports:
+          - protocol: TCP
+            port: 9187
+    egress:
+      - to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: postgres
+        ports:
+          - protocol: TCP
+            port: 5432
+      # Allow DNS
+      - ports:
+          - protocol: UDP
+            port: 53
+          - protocol: TCP
+            port: 53
+
+# ----- ServiceMonitor --------------------------------------------------------
+serviceMonitor:
+  enabled: true
+  namespace: "monitoring"
+  labels:
+    release: prometheus
+  interval: 60s
+  scrapeTimeout: 30s
+  path: /metrics
+  port: metrics
+  scheme: http
+  tlsConfig: {}
+  relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_label_db]
+      targetLabel: db
+  metricRelabelings: []
+
+# ----- VPA -------------------------------------------------------------------
+vpa:
+  enabled: true
+  updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+      - containerName: "postgres"
+        minAllowed:
+          cpu: 250m
+          memory: 256Mi
+        maxAllowed:
+          cpu: 4
+          memory: 8Gi
+        controlledResources: [cpu, memory]
+      - containerName: "metrics-exporter"
+        minAllowed:
+          cpu: 25m
+          memory: 32Mi
+        maxAllowed:
+          cpu: 200m
+          memory: 256Mi
+        controlledResources: [cpu, memory]
+
+# ----- Extra raw YAML --------------------------------------------------------
+extraDeploy:
+  - |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: postgres-backups
+      namespace: {{ .Release.Namespace }}
+      labels:
+        {{- include "universal-chart.labels" . | nindent 8 }}
+      annotations:
+        backup.velero.io/backup-volumes: "postgres-backups"
+    spec:
+      accessModes: [ReadWriteOnce]
+      storageClassName: postgres-ssd
+      resources:
+        requests:
+          storage: 100Gi

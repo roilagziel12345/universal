@@ -1,0 +1,24 @@
+{{- $fullName := include "universal-chart.fullname" . }}
+{{- $serviceType := .Values.service.type }}
+1. Application deployed: {{ $fullName }}
+
+{{- if .Values.ingress.enabled }}
+2. Access your app:
+  {{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+  {{- end }}
+{{- else if contains "NodePort" $serviceType }}
+2. Access your app:
+  export NODE_PORT=$(kubectl get svc {{ $fullName }} -o jsonpath="{.spec.ports[0].nodePort}")
+  export NODE_IP=$(kubectl get nodes -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo "http://$NODE_IP:$NODE_PORT"
+{{- else if contains "LoadBalancer" $serviceType }}
+2. Access your app (may take a moment):
+  export SERVICE_IP=$(kubectl get svc {{ $fullName }} -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+  echo "http://$SERVICE_IP"
+{{- else }}
+2. Port-forward to access locally:
+  {{- $firstPort := 80 }}{{- range $name, $spec := .Values.service.ports }}{{- $firstPort = $spec.port }}{{- break }}{{- end }}
+  kubectl port-forward svc/{{ $fullName }} 8080:{{ $firstPort }}
+  Then open: http://localhost:8080
+{{- end }}

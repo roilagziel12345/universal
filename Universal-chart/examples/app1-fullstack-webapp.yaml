@@ -1,0 +1,994 @@
+# =============================================================================
+# EXAMPLE 1 — Full-Stack Web Application (Deployment)
+# Tests: workload=deployment, HPA, VPA, PDB, Ingress, ServiceMonitor,
+#        NetworkPolicy, RBAC, Jobs, CronJobs, ConfigMaps, Secrets, PVC,
+#        sidecars, initContainers, all scheduling options, extraDeploy
+# =============================================================================
+
+# ----- Global metadata -------------------------------------------------------
+nameOverride: "webapp"
+fullnameOverride: ""
+
+commonLabels:
+  team: platform
+  environment: production
+  cost-center: "cc-1234"
+
+commonAnnotations:
+  owner: "platform-team@example.com"
+  maintainer: "https://github.com/org/webapp"
+
+# ----- Workload --------------------------------------------------------------
+workload:
+  type: deployment
+
+replicaCount: 3
+revisionHistoryLimit: 5
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# ----- Image -----------------------------------------------------------------
+image:
+  repository: nginx
+  tag: "1.25.3"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: registry-credentials
+
+# ----- Pod metadata ----------------------------------------------------------
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9091"
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: "webapp"
+
+podLabels:
+  sidecar.istio.io/inject: "true"
+  version: "v2"
+
+# ----- Security contexts -----------------------------------------------------
+podSecurityContext:
+  fsGroup: 2000
+  fsGroupChangePolicy: OnRootMismatch
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 3000
+  supplementalGroups: [2000]
+  seccompProfile:
+    type: RuntimeDefault
+  sysctls:
+    - name: net.core.somaxconn
+      value: "1024"
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 3000
+  capabilities:
+    drop: [ALL]
+    add: [NET_BIND_SERVICE]
+  seccompProfile:
+    type: RuntimeDefault
+
+# ----- Main container spec ---------------------------------------------------
+command: ["/bin/sh"]
+args: ["-c", "nginx -g 'daemon off;'"]
+workingDir: "/app"
+
+stdin: false
+stdinOnce: false
+tty: false
+
+terminationMessagePath: /dev/termination-log
+terminationMessagePolicy: FallbackToLogsOnError
+
+# ----- Ports -----------------------------------------------------------------
+ports:
+  - name: http
+    containerPort: 8080
+    protocol: TCP
+  - name: https
+    containerPort: 8443
+    protocol: TCP
+  - name: metrics
+    containerPort: 9091
+    protocol: TCP
+  - name: grpc
+    containerPort: 9090
+    protocol: TCP
+
+# ----- Environment variables -----------------------------------------------------------------
+env:
+  # Literal value
+  - name: APP_ENV
+    value: "production"
+  - name: LOG_LEVEL
+    value: "info"
+  # From fieldRef (Downward API)
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  # From resourceFieldRef
+  - name: MEM_LIMIT
+    valueFrom:
+      resourceFieldRef:
+        containerName: webapp
+        resource: limits.memory
+  # From ConfigMap key
+  - name: DB_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: webapp-config
+        key: db-host
+  # From Secret key
+  - name: DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: webapp-secret
+        key: db-password
+
+envFrom:
+  - configMapRef:
+      name: webapp-config
+  - secretRef:
+      name: webapp-secret
+  - configMapRef:
+      name: feature-flags
+      optional: true
+
+# ----- Resources -------------------------------------------------------------
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# ----- Probes ----------------------------------------------------------------
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+    httpHeaders:
+      - name: Custom-Header
+        value: HealthCheck
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  failureThreshold: 30
+  periodSeconds: 10
+
+# ----- Lifecycle hooks -------------------------------------------------------
+lifecycle:
+  postStart:
+    exec:
+      command: ["/bin/sh", "-c", "echo 'Container started' >> /var/log/app/startup.log"]
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 15"]
+
+# ----- Volume Mounts ---------------------------------------------------------
+volumeMounts:
+  - name: config-vol
+    mountPath: /etc/app/config
+    readOnly: true
+  - name: secret-vol
+    mountPath: /etc/app/secrets
+    readOnly: true
+  - name: data-vol
+    mountPath: /data
+    subPath: webapp-data
+  - name: tmp-dir
+    mountPath: /tmp
+  - name: shared-mem
+    mountPath: /dev/shm
+  - name: downward-vol
+    mountPath: /etc/podinfo
+    readOnly: true
+  - name: projected-vol
+    mountPath: /etc/projected
+    readOnly: true
+  - name: logs-vol
+    mountPath: /var/log/app
+  - name: nfs-vol
+    mountPath: /mnt/shared
+
+volumeDevices: []
+
+# ----- Volumes ---------------------------------------------------------------
+volumes:
+  # ConfigMap volume
+  - name: config-vol
+    configMap:
+      name: webapp-config
+      defaultMode: 0644
+      items:
+        - key: app.conf
+          path: app.conf
+          mode: 0600
+        - key: nginx.conf
+          path: nginx.conf
+
+  # Secret volume
+  - name: secret-vol
+    secret:
+      secretName: webapp-secret
+      defaultMode: 0400
+      items:
+        - key: tls.crt
+          path: tls.crt
+        - key: tls.key
+          path: tls.key
+
+  # EmptyDir volumes
+  - name: tmp-dir
+    emptyDir: {}
+
+  - name: shared-mem
+    emptyDir:
+      medium: Memory
+      sizeLimit: 256Mi
+
+  # PVC volume
+  - name: data-vol
+    persistentVolumeClaim:
+      claimName: webapp-data
+      readOnly: false
+
+  # HostPath volume
+  - name: host-logs
+    hostPath:
+      path: /var/log/myapp
+      type: DirectoryOrCreate
+
+  # Projected volume (SA token + ConfigMap + Secret + DownwardAPI)
+  - name: projected-vol
+    projected:
+      defaultMode: 0444
+      sources:
+        - serviceAccountToken:
+            path: token
+            expirationSeconds: 3600
+            audience: api
+        - configMap:
+            name: webapp-config
+        - secret:
+            name: webapp-secret
+        - downwardAPI:
+            items:
+              - path: labels
+                fieldRef:
+                  fieldPath: metadata.labels
+              - path: annotations
+                fieldRef:
+                  fieldPath: metadata.annotations
+
+  # DownwardAPI volume
+  - name: downward-vol
+    downwardAPI:
+      items:
+        - path: labels
+          fieldRef:
+            fieldPath: metadata.labels
+        - path: annotations
+          fieldRef:
+            fieldPath: metadata.annotations
+        - path: cpu-limit
+          resourceFieldRef:
+            containerName: webapp
+            resource: limits.cpu
+
+  # NFS volume
+  - name: nfs-vol
+    nfs:
+      server: nfs.example.com
+      path: /exports/webapp
+      readOnly: false
+
+  # CSI volume (Secrets Store)
+  - name: csi-secrets
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: webapp-spc
+
+  # Ephemeral inline PVC
+  - name: scratch
+    ephemeral:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          storageClassName: fast-ssd
+          resources:
+            requests:
+              storage: 1Gi
+
+  # Logs volume for sidecar sharing
+  - name: logs-vol
+    emptyDir: {}
+
+# ----- Init containers -------------------------------------------------------
+initContainers:
+  - name: init-db-wait
+    image: busybox:1.36
+    command:
+      - sh
+      - -c
+      - |
+        until nc -z postgres 5432; do
+          echo "Waiting for DB..."
+          sleep 3
+        done
+        echo "DB is ready."
+    env:
+      - name: DB_HOST
+        value: postgres
+    resources:
+      requests:
+        cpu: 50m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      allowPrivilegeEscalation: false
+
+  - name: init-migrations
+    image: myapp-migrations:1.2.0
+    command: ["python", "manage.py", "migrate", "--no-input"]
+    envFrom:
+      - secretRef:
+          name: webapp-secret
+    volumeMounts:
+      - name: config-vol
+        mountPath: /etc/app/config
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# ----- Sidecar containers ----------------------------------------------------
+sidecars:
+  - name: log-shipper
+    image: fluent/fluent-bit:2.2.0
+    env:
+      - name: LOG_LEVEL
+        value: info
+      - name: FLUENT_ELASTICSEARCH_HOST
+        value: elasticsearch.logging.svc.cluster.local
+    volumeMounts:
+      - name: logs-vol
+        mountPath: /var/log/app
+        readOnly: true
+      - name: config-vol
+        mountPath: /fluent-bit/etc
+        readOnly: true
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    securityContext:
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+
+  - name: vault-agent
+    image: vault:1.15.4
+    args: ["agent", "-config=/etc/vault/agent.hcl"]
+    containerRestartRules:
+      - exitCode: 139
+        action: RestartAllContainers
+    volumeMounts:
+      - name: projected-vol
+        mountPath: /var/run/secrets/tokens
+        readOnly: true
+      - name: secret-vol
+        mountPath: /etc/vault
+        readOnly: true
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+# ----- Scheduling ------------------------------------------------------------
+nodeSelector:
+  kubernetes.io/os: linux
+  node.kubernetes.io/instance-type: m5.xlarge
+
+tolerations:
+  - key: "dedicated"
+    operator: Equal
+    value: "webapp"
+    effect: NoSchedule
+  - key: "node.kubernetes.io/not-ready"
+    operator: Exists
+    effect: NoExecute
+    tolerationSeconds: 300
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: webapp
+          topologyKey: kubernetes.io/hostname
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/os
+              operator: In
+              values: [linux]
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: webapp
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: webapp
+
+# ----- Advanced pod settings -------------------------------------------------
+hostNetwork: false
+hostIPC: false
+hostPID: false
+shareProcessNamespace: false
+priorityClassName: "high-priority"
+runtimeClassName: ""
+schedulerName: ""
+restartPolicy: ""
+
+dnsPolicy: ClusterFirst
+dnsConfig:
+  nameservers:
+    - 8.8.8.8
+  searches:
+    - ns1.svc.cluster.local
+  options:
+    - name: ndots
+      value: "5"
+
+hostAliases:
+  - ip: "127.0.0.1"
+    hostnames:
+      - "webapp.local"
+      - "api.local"
+
+readinessGates:
+  - conditionType: "www.example.com/feature-1"
+
+# ----- Service ---------------------------------------------------------------
+service:
+  enabled: true
+  type: ClusterIP
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+  labels:
+    monitoring: "true"
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP
+    - name: metrics
+      port: 9091
+      targetPort: metrics
+      protocol: TCP
+    - name: grpc
+      port: 9090
+      targetPort: grpc
+      protocol: TCP
+
+# ----- Ingress ---------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: webapp.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          portName: http
+        - path: /api
+          pathType: Prefix
+          portName: http
+    - host: api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          portName: grpc
+  tls:
+    - secretName: webapp-tls
+      hosts:
+        - webapp.example.com
+        - api.example.com
+
+# OpenShift Route — disabled here (can't use both ingress + route)
+route:
+  enabled: false
+
+# ----- ConfigMaps ------------------------------------------------------------
+configMaps:
+  - name: webapp-config
+    annotations:
+      description: "Main application configuration"
+    labels:
+      config-type: app
+    data:
+      LOG_LEVEL: info
+      DB_HOST: postgres.default.svc.cluster.local
+      DB_PORT: "5432"
+      db-host: postgres.default.svc.cluster.local
+      app.conf: |
+        [server]
+        port = 8080
+        read_timeout = 30s
+        write_timeout = 30s
+        [database]
+        pool_size = 10
+        max_idle = 5
+      nginx.conf: |
+        worker_processes auto;
+        events { worker_connections 1024; }
+        http {
+          server {
+            listen 8080;
+            location / { proxy_pass http://localhost:8081; }
+          }
+        }
+
+  - name: feature-flags
+    data:
+      FEATURE_DARK_MODE: "true"
+      FEATURE_NEW_UI: "false"
+      FEATURE_BETA_API: "true"
+
+# ----- Secrets ---------------------------------------------------------------
+secrets:
+  - name: webapp-secret
+    type: Opaque
+    annotations:
+      reloader.stakater.com/match: "true"
+    labels:
+      secret-type: app
+    stringData:
+      db-password: "changeme-in-production"
+      api-key: "my-api-key-replace-in-prod"
+      DB_PASSWORD: "changeme-in-production"
+      API_KEY: "replace-me"
+
+  - name: webapp-tls
+    type: kubernetes.io/tls
+    data:
+      # These are placeholder base64 values — replace with real certs
+      tls.crt: dGxzLWNydC1wbGFjZWhvbGRlcg==
+      tls.key: dGxzLWtleS1wbGFjZWhvbGRlcg==
+
+  - name: registry-credentials
+    type: kubernetes.io/dockerconfigjson
+    data:
+      .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5leGFtcGxlLmNvbSI6eyJ1c2VybmFtZSI6InVzZXIiLCJwYXNzd29yZCI6InBhc3MiLCJhdXRoIjoiZFhObGNqcHdZWE56In19fQ==
+
+# ----- PVCs ------------------------------------------------------------------
+pvc:
+  - name: webapp-data
+    accessModes: [ReadWriteOnce]
+    size: 20Gi
+    storageClassName: fast-ssd
+    volumeMode: Filesystem
+    annotations:
+      backup.velero.io/backup-volumes: "webapp-data"
+
+# ----- PersistentVolumes -----------------------------------------------------
+persistentVolumes:
+  - name: webapp-static-pv
+    capacity: 50Gi
+    accessModes: [ReadWriteMany]
+    reclaimPolicy: Retain
+    storageClassName: manual
+    volumeMode: Filesystem
+    mountOptions:
+      - hard
+      - nfsvers=4.1
+    nfs:
+      server: nfs.example.com
+      path: /exports/webapp-static
+
+# ----- StorageClasses --------------------------------------------------------
+storageClasses:
+  - name: fast-ssd
+    provisioner: ebs.csi.aws.com
+    reclaimPolicy: Delete
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    parameters:
+      type: gp3
+      encrypted: "true"
+      iops: "3000"
+      throughput: "125"
+
+# ----- Jobs ------------------------------------------------------------------
+jobs:
+  - name: db-migrate
+    annotations:
+      argocd.argoproj.io/hook: PreSync
+      argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    labels:
+      job-type: migration
+    backoffLimit: 3
+    activeDeadlineSeconds: 600
+    ttlSecondsAfterFinished: 3600
+    restartPolicy: OnFailure
+    image:
+      repository: myapp-migrations
+      tag: "1.2.0"
+    command: ["python", "manage.py", "migrate", "--no-input"]
+    args: []
+    env:
+      - name: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+    envFrom:
+      - secretRef:
+          name: webapp-secret
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    volumeMounts:
+      - name: config-vol
+        mountPath: /etc/app/config
+        readOnly: true
+    volumes:
+      - name: config-vol
+        configMap:
+          name: webapp-config
+
+  - name: seed-data
+    backoffLimit: 1
+    activeDeadlineSeconds: 300
+    ttlSecondsAfterFinished: 1800
+    restartPolicy: Never
+    image:
+      repository: myapp-migrations
+      tag: "1.2.0"
+    command: ["python", "manage.py", "loaddata", "fixtures/seed.json"]
+    envFrom:
+      - secretRef:
+          name: webapp-secret
+
+# ----- CronJobs --------------------------------------------------------------
+cronjobs:
+  - name: daily-backup
+    schedule: "0 2 * * *"
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 1
+    suspend: false
+    startingDeadlineSeconds: 60
+    jobTemplate:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      restartPolicy: OnFailure
+      image:
+        repository: backup-tool
+        tag: "latest"
+      command: ["/scripts/backup.sh"]
+      args:
+        - "--bucket=my-backup-bucket"
+        - "--prefix=webapp"
+      env:
+        - name: AWS_REGION
+          value: us-east-1
+      envFrom:
+        - secretRef:
+            name: webapp-secret
+      resources:
+        requests:
+          cpu: 200m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      volumeMounts:
+        - name: data-vol
+          mountPath: /data
+          readOnly: true
+      volumes:
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: webapp-data
+
+  - name: cache-warm
+    schedule: "*/15 * * * *"
+    concurrencyPolicy: Replace
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 1
+    jobTemplate:
+      backoffLimit: 0
+      restartPolicy: Never
+      image:
+        repository: cache-warmer
+        tag: "1.0.0"
+      command: ["python", "warm_cache.py"]
+      envFrom:
+        - configMapRef:
+            name: webapp-config
+
+# ----- ServiceAccount --------------------------------------------------------
+serviceAccount:
+  create: true
+  name: ""
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/webapp-role"
+    iam.gke.io/gcp-service-account: "webapp@project.iam.gserviceaccount.com"
+  automountServiceAccountToken: true
+
+# ----- RBAC ------------------------------------------------------------------
+rbac:
+  roles:
+    - name: webapp-role
+      rules:
+        - apiGroups: [""]
+          resources: ["pods", "configmaps", "secrets"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["apps"]
+          resources: ["deployments", "replicasets"]
+          verbs: ["get", "list", "watch", "update", "patch"]
+
+  roleBindings:
+    - name: webapp-rb
+      roleRef: webapp-role
+      subjects:
+        - kind: ServiceAccount
+          name: webapp-universal-chart
+          namespace: default
+
+  clusterRoles:
+    - name: webapp-cr
+      rules:
+        - apiGroups: [""]
+          resources: ["nodes", "namespaces"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["metrics.k8s.io"]
+          resources: ["pods", "nodes"]
+          verbs: ["get", "list"]
+
+  clusterRoleBindings:
+    - name: webapp-crb
+      roleRef: webapp-cr
+      subjects:
+        - kind: ServiceAccount
+          name: webapp-universal-chart
+          namespace: default
+
+# ----- HPA -------------------------------------------------------------------
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: AverageValue
+          averageValue: 400Mi
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: 100
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 4
+          periodSeconds: 60
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+
+# ----- PDB -------------------------------------------------------------------
+pdb:
+  enabled: true
+  minAvailable: "50%"
+
+# ----- NetworkPolicy ---------------------------------------------------------
+networkPolicies:
+  - name: allow-ingress-from-nginx
+    podSelector: {}
+    policyTypes: [Ingress, Egress]
+    ingress:
+      - from:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: ingress-nginx
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: ingress-nginx
+        ports:
+          - protocol: TCP
+            port: 8080
+          - protocol: TCP
+            port: 8443
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: monitoring
+        ports:
+          - protocol: TCP
+            port: 9091
+    egress:
+      - to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: postgres
+        ports:
+          - protocol: TCP
+            port: 5432
+      - to:
+          - ipBlock:
+              cidr: 0.0.0.0/0
+              except:
+                - 169.254.169.254/32
+        ports:
+          - protocol: TCP
+            port: 443
+
+# ----- ServiceMonitor --------------------------------------------------------
+serviceMonitor:
+  enabled: true
+  namespace: "monitoring"
+  labels:
+    release: prometheus
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /metrics
+  port: metrics
+  scheme: http
+  tlsConfig: {}
+  relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_label_version]
+      targetLabel: version
+  metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: 'webapp_(.+)'
+      action: keep
+
+# ----- VPA -------------------------------------------------------------------
+vpa:
+  enabled: true
+  updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+      - containerName: "webapp"
+        minAllowed:
+          cpu: 50m
+          memory: 64Mi
+        maxAllowed:
+          cpu: 2
+          memory: 2Gi
+        controlledResources: [cpu, memory]
+      - containerName: "log-shipper"
+        minAllowed:
+          cpu: 25m
+          memory: 32Mi
+        maxAllowed:
+          cpu: 200m
+          memory: 256Mi
+        controlledResources: [cpu, memory]
+
+# ----- Extra raw YAML (tpl supported) ----------------------------------------
+extraDeploy:
+  - |
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: {{ .Release.Name }}-runtime-config
+      namespace: {{ .Release.Namespace }}
+      labels:
+        {{- include "universal-chart.labels" . | nindent 8 }}
+    data:
+      RELEASE_NAME: {{ .Release.Name }}
+      CHART_VERSION: {{ .Chart.Version }}
+
+  - |
+    apiVersion: monitoring.coreos.com/v1
+    kind: PrometheusRule
+    metadata:
+      name: {{ .Release.Name }}-alerts
+      namespace: monitoring
+    spec:
+      groups:
+        - name: webapp.rules
+          rules:
+            - alert: WebappHighErrorRate
+              expr: rate(http_errors_total[5m]) > 0.05
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "High error rate on {{ .Release.Name }}"

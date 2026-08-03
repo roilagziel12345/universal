@@ -1,0 +1,464 @@
+suite: Deployment
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should render a Deployment by default
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-universal-chart
+
+  - it: should not render when workload type is statefulset
+    set:
+      workload.type: statefulset
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when workload type is daemonset
+    set:
+      workload.type: daemonset
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should use default replica count
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: should set custom replica count
+    set:
+      replicaCount: 5
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 5
+
+  - it: should omit replicas when HPA is enabled
+    set:
+      hpa.enabled: true
+    asserts:
+      - isNull:
+          path: spec.replicas
+
+  - it: should set revision history limit
+    set:
+      revisionHistoryLimit: 5
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 5
+
+  - it: should set strategy
+    set:
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 2
+          maxUnavailable: 0
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: 2
+
+  - it: should set selector labels
+    asserts:
+      - isNotNull:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+      - isNotNull:
+          path: spec.selector.matchLabels["app.kubernetes.io/instance"]
+
+  - it: should include pod labels
+    set:
+      podLabels:
+        custom: label
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels.custom
+          value: label
+
+  - it: should include pod annotations
+    set:
+      podAnnotations:
+        prometheus.io/scrape: "true"
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+
+  - it: should include checksum annotations when configMaps are set
+    set:
+      configMaps:
+        test:
+          data:
+            key: value
+    asserts:
+      - isNotNull:
+          path: spec.template.metadata.annotations["checksum/configmaps"]
+
+  - it: should include checksum annotations when secrets are set
+    set:
+      secrets:
+        test:
+          stringData:
+            key: value
+    asserts:
+      - isNotNull:
+          path: spec.template.metadata.annotations["checksum/secrets"]
+
+  - it: should set common labels
+    set:
+      commonLabels:
+        team: platform
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: platform
+
+  - it: should set common annotations
+    set:
+      commonAnnotations:
+        note: test
+    asserts:
+      - equal:
+          path: metadata.annotations.note
+          value: test
+
+  - it: should use nameOverride
+    set:
+      nameOverride: myapp
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-myapp
+
+  - it: should use fullnameOverride
+    set:
+      fullnameOverride: custom-name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-name
+
+  - it: should set image and tag
+    set:
+      image:
+        repository: my-registry/app
+        tag: "2.0.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "my-registry/app:2.0.0"
+
+  - it: should default tag to appVersion
+    set:
+      image:
+        repository: nginx
+        tag: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "nginx:1.0.0"
+
+  - it: should set image pull policy
+    set:
+      image:
+        pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: should set imagePullSecrets
+    set:
+      imagePullSecrets:
+        - name: my-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: my-secret
+
+  - it: should set command and args
+    set:
+      command: ["/bin/sh", "-c"]
+      args: ["echo hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/bin/sh", "-c"]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["echo hello"]
+
+  - it: should set ports
+    set:
+      ports:
+        http:
+          containerPort: 8080
+          protocol: TCP
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: http
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8080
+
+  - it: should set env vars
+    set:
+      env:
+        MY_VAR:
+          value: hello
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: MY_VAR
+
+  - it: should set envFrom
+    set:
+      envFrom:
+        my-config:
+          type: configMapRef
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].envFrom[0].configMapRef.name
+          value: my-config
+
+  - it: should set resources
+    set:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+
+  - it: should set liveness probe
+    set:
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 10
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+
+  - it: should set readiness probe
+    set:
+      readinessProbe:
+        tcpSocket:
+          port: 8080
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket.port
+          value: 8080
+
+  - it: should set startup probe
+    set:
+      startupProbe:
+        exec:
+          command: ["cat", "/tmp/ready"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.exec.command[0]
+          value: cat
+
+  - it: should set containerRestartRules
+    set:
+      containerRestartRules:
+        - exitCode: 42
+          action: RestartAllContainers
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].containerRestartRules[0].exitCode
+          value: 42
+
+  - it: should set lifecycle hooks
+    set:
+      lifecycle:
+        preStop:
+          exec:
+            command: ["/bin/sh", "-c", "sleep 10"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command[2]
+          value: "sleep 10"
+
+  - it: should set volume mounts
+    set:
+      volumeMounts:
+        config:
+          mountPath: /etc/config
+          readOnly: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].name
+          value: config
+
+  - it: should set volumes
+    set:
+      volumes:
+        tmp:
+          emptyDir: {}
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[0].name
+          value: tmp
+
+  - it: should set init containers
+    set:
+      initContainers:
+        init-db:
+          image: busybox:1.36
+          command: ["sh", "-c", "echo init"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: init-db
+
+  - it: should set sidecars
+    set:
+      sidecars:
+        log-shipper:
+          image: fluentbit:2.0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: log-shipper
+
+  - it: should set node selector
+    set:
+      nodeSelector:
+        disk: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disk
+          value: ssd
+
+  - it: should set tolerations
+    set:
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: gpu
+          effect: NoSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: dedicated
+
+  - it: should set affinity
+    set:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+
+  - it: should set topology spread constraints
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 1
+
+  - it: should set security contexts
+    set:
+      podSecurityContext:
+        runAsNonRoot: true
+        fsGroup: 2000
+      securityContext:
+        readOnlyRootFilesystem: true
+        runAsUser: 1000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 2000
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+          value: 1000
+
+  - it: should set host networking options
+    set:
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      shareProcessNamespace: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+      - equal:
+          path: spec.template.spec.hostPID
+          value: true
+      - equal:
+          path: spec.template.spec.hostIPC
+          value: true
+      - equal:
+          path: spec.template.spec.shareProcessNamespace
+          value: true
+
+  - it: should set DNS config
+    set:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsPolicy
+          value: None
+      - equal:
+          path: spec.template.spec.dnsConfig.nameservers[0]
+          value: "8.8.8.8"
+
+  - it: should set termination grace period
+    set:
+      terminationGracePeriodSeconds: 60
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+
+  - it: should set priority class
+    set:
+      priorityClassName: high-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+
+  - it: should set service account name
+    set:
+      serviceAccount:
+        create: true
+        name: custom-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: custom-sa

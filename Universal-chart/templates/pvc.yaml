@@ -1,0 +1,34 @@
+{{- range $name, $spec := .Values.pvc }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "universal-chart.labels" $ | nindent 4 }}
+  {{- with merge ($.Values.commonAnnotations | default dict) ($spec.annotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- toYaml $spec.accessModes | nindent 4 }}
+  {{- with $spec.storageClassName }}
+  storageClassName: {{ . }}
+  {{- end }}
+  volumeMode: {{ $spec.volumeMode | default "Filesystem" }}
+  {{- with $spec.volumeName }}
+  volumeName: {{ . }}
+  {{- end }}
+  {{- with $spec.selector }}
+  selector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $spec.dataSource }}
+  dataSource:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $spec.size }}
+{{- end }}

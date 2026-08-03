@@ -1,0 +1,86 @@
+suite: Job
+templates:
+  - templates/job.yaml
+tests:
+  - it: should not render when no jobs defined
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a job
+    set:
+      jobs:
+        migrate:
+          command: ["python", "manage.py", "migrate"]
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-universal-chart-migrate
+
+  - it: should set backoff limit
+    set:
+      jobs:
+        test:
+          backoffLimit: 5
+          command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.backoffLimit
+          value: 5
+
+  - it: should set activeDeadlineSeconds
+    set:
+      jobs:
+        test:
+          activeDeadlineSeconds: 600
+          command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.activeDeadlineSeconds
+          value: 600
+
+  - it: should set ttlSecondsAfterFinished
+    set:
+      jobs:
+        test:
+          ttlSecondsAfterFinished: 3600
+          command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 3600
+
+  - it: should set annotations (ArgoCD hooks)
+    set:
+      jobs:
+        test:
+          annotations:
+            argocd.argoproj.io/hook: PreSync
+          command: ["echo"]
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: PreSync
+
+  - it: should render multiple jobs
+    set:
+      jobs:
+        job1:
+          command: ["echo", "1"]
+        job2:
+          command: ["echo", "2"]
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should default restartPolicy to OnFailure
+    set:
+      jobs:
+        test:
+          command: ["echo"]
+    asserts:
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: OnFailure

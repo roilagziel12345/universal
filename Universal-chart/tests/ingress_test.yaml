@@ -1,0 +1,109 @@
+suite: Ingress
+templates:
+  - templates/ingress.yaml
+tests:
+  - it: should not render by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when enabled
+    set:
+      ingress:
+        enabled: true
+        hosts:
+          - host: myapp.example.com
+            paths:
+              - path: /
+                pathType: Prefix
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - isKind:
+          of: Ingress
+
+  - it: should set className
+    set:
+      ingress:
+        enabled: true
+        className: nginx
+        hosts:
+          - host: myapp.example.com
+            paths:
+              - path: /
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  - it: should set hosts and paths
+    set:
+      ingress:
+        enabled: true
+        hosts:
+          - host: myapp.example.com
+            paths:
+              - path: /api
+                pathType: Prefix
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: myapp.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /api
+
+  - it: should set TLS
+    set:
+      ingress:
+        enabled: true
+        tls:
+          - secretName: myapp-tls
+            hosts:
+              - myapp.example.com
+        hosts:
+          - host: myapp.example.com
+            paths:
+              - path: /
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: myapp-tls
+
+  - it: should set annotations
+    set:
+      ingress:
+        enabled: true
+        annotations:
+          nginx.ingress.kubernetes.io/rewrite-target: /
+        hosts:
+          - host: myapp.example.com
+            paths:
+              - path: /
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /

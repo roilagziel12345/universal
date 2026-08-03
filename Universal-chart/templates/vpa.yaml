@@ -1,0 +1,23 @@
+{{- if .Values.vpa.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "universal-chart.fullname" . }}
+  labels:
+    {{- include "universal-chart.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: {{ index (dict "deployment" "Deployment" "statefulset" "StatefulSet" "daemonset" "DaemonSet") .Values.workload.type }}
+    name: {{ include "universal-chart.fullname" . }}
+  updatePolicy:
+    updateMode: {{ .Values.vpa.updateMode }}
+  {{- with .Values.vpa.resourcePolicy }}
+  resourcePolicy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

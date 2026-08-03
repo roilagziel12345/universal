@@ -1,0 +1,85 @@
+###############################################################################
+# ApplicationSet — wires the layered gitops values structure together
+#
+# Repo layout expected:
+#   apps/
+#   ├── _base/
+#   │   ├── defaults.yaml
+#   │   └── apps/<app>.yaml
+#   └── env/<ENV>/
+#       ├── env.yaml
+#       └── clusters/<CLUSTER>/
+#           ├── cluster.yaml
+#           └── apps/<app>.yaml
+###############################################################################
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-apps
+  namespace: argocd
+spec:
+  # ─── One Application per app×env×cluster combination ─────────────────────
+  generators:
+    - matrix:
+        generators:
+          # Outer: all env/cluster combos from directory discovery
+          - git:
+              repoURL: https://git.example.com/gitops/apps.git
+              revision: main
+              directories:
+                - path: env/*/clusters/*/*   # env/dev/clusters/mng-1/apps
+          # Inner: all apps within that cluster
+          - git:
+              repoURL: https://git.example.com/gitops/apps.git
+              revision: main
+              files:
+                - path: "{{path}}/apps/*.yaml"
+
+  # ─── Template ─────────────────────────────────────────────────────────────
+  template:
+    metadata:
+      # Name: <app>-<env>-<cluster>  e.g. frontend-dev-mng-1
+      name: "{{path.basename}}-{{path[1]}}-{{path[3]}}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+
+    spec:
+      project: default
+
+      source:
+        repoURL: https://git.example.com/gitops/platform.git
+        targetRevision: main
+        path: charts/universal-chart
+        helm:
+          # Layered values — merged in order (last wins)
+          valueFiles:
+            # 1. Global defaults for all apps
+            - https://raw.githubusercontent.com/gitops/apps/main/_base/defaults.yaml
+            # 2. App base identity (what the app IS, unchanged across envs)
+            - https://raw.githubusercontent.com/gitops/apps/main/_base/apps/{{path.basename}}.yaml
+            # 3. Env-wide settings (low resources in dev, HPA+PDB in prod)
+            - https://raw.githubusercontent.com/gitops/apps/main/env/{{path[1]}}/env.yaml
+            # 4. Cluster-specific settings (storageClass, domain, node labels)
+            - https://raw.githubusercontent.com/gitops/apps/main/env/{{path[1]}}/clusters/{{path[3]}}/cluster.yaml
+            # 5. App + env + cluster override (only the real diffs)
+            - $values/env/{{path[1]}}/clusters/{{path[3]}}/apps/{{path.basename}}.yaml
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{path.basename}}-{{path[1]}}"   # e.g. frontend-dev
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true    # handles large objects cleanly
+          - RespectIgnoreDifferences=true
+
+      # Keep diffs clean for fields managed outside Argo
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas    # if HPA manages replicas

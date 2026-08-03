@@ -1,0 +1,96 @@
+suite: Extra OpenShift Routes (map-based)
+templates:
+  - templates/routes.yaml
+tests:
+  - it: should not render by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render an entry that is not enabled
+    set:
+      routes:
+        admin-console:
+          host: admin.apps.cluster.example.com
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render one Route per enabled entry, named after the map key
+    set:
+      routes:
+        admin-console:
+          enabled: true
+          host: admin.apps.cluster.example.com
+          targetPort: admin-http
+    asserts:
+      - isKind:
+          of: Route
+      - equal:
+          path: apiVersion
+          value: route.openshift.io/v1
+      - equal:
+          path: metadata.name
+          value: admin-console
+
+  - it: should render multiple entries as separate documents
+    set:
+      routes:
+        admin-console:
+          enabled: true
+          host: admin.apps.cluster.example.com
+          targetPort: admin-http
+        public-console:
+          enabled: true
+          host: public.apps.cluster.example.com
+          targetPort: http
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should default the backing service to the release fullname when serviceName is not set
+    set:
+      routes:
+        admin-console:
+          enabled: true
+          targetPort: admin-http
+    asserts:
+      - equal:
+          path: spec.to.name
+          value: RELEASE-NAME-super-universal-chart
+
+  - it: should set a custom backing serviceName
+    set:
+      routes:
+        admin-console:
+          enabled: true
+          targetPort: admin-http
+          serviceName: admin
+    asserts:
+      - equal:
+          path: spec.to.name
+          value: admin
+
+  - it: should set TLS termination
+    set:
+      routes:
+        admin-console:
+          enabled: true
+          targetPort: admin-http
+          tls:
+            termination: passthrough
+    asserts:
+      - equal:
+          path: spec.tls.termination
+          value: passthrough
+
+  - it: should default wildcardPolicy to None
+    set:
+      routes:
+        admin-console:
+          enabled: true
+          targetPort: admin-http
+    asserts:
+      - equal:
+          path: spec.wildcardPolicy
+          value: None

@@ -1,0 +1,28 @@
+# _base/apps/backend.yaml
+image:
+  repository: my-registry/backend
+
+workload:
+  type: deployment
+
+ports:
+  - name: http
+    containerPort: 8080
+
+service:
+  enabled: true
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+
+configMaps:
+  - name: backend-config
+    data:
+      LOG_LEVEL: info
+
+envFrom:
+  - configMapRef:
+      name: backend-config
+  - secretRef:
+      name: backend-secret

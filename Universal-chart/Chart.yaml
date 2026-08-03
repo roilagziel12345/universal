@@ -1,0 +1,6 @@
+apiVersion: v2
+name: super-universal-chart
+description: A generic, modular Helm chart for deploying any application on Kubernetes/OpenShift
+type: application
+version: 1.0.0
+appVersion: "2.0.0"

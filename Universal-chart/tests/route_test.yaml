@@ -1,0 +1,113 @@
+suite: OpenShift Route
+templates:
+  - templates/route.yaml
+tests:
+  - it: should not render by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when enabled
+    set:
+      route:
+        enabled: true
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - isKind:
+          of: Route
+      - equal:
+          path: apiVersion
+          value: route.openshift.io/v1
+
+  - it: should set host
+    set:
+      route:
+        enabled: true
+        host: myapp.apps.cluster.example.com
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.host
+          value: myapp.apps.cluster.example.com
+
+  - it: should set path
+    set:
+      route:
+        enabled: true
+        path: /api
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.path
+          value: /api
+
+  - it: should set TLS termination
+    set:
+      route:
+        enabled: true
+        tls:
+          termination: passthrough
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.tls.termination
+          value: passthrough
+
+  - it: should default targetPort to first service port name
+    set:
+      route:
+        enabled: true
+      service:
+        ports:
+          web:
+            port: 80
+            targetPort: 8080
+    asserts:
+      - equal:
+          path: spec.port.targetPort
+          value: web
+
+  - it: should set custom targetPort
+    set:
+      route:
+        enabled: true
+        targetPort: grpc
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.port.targetPort
+          value: grpc
+
+  - it: should set wildcard policy
+    set:
+      route:
+        enabled: true
+      service:
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.wildcardPolicy
+          value: None

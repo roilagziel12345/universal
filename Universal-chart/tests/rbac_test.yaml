@@ -1,0 +1,78 @@
+suite: RBAC
+templates:
+  - templates/rbac.yaml
+tests:
+  - it: should not render when no RBAC defined
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a Role
+    set:
+      rbac:
+        roles:
+          my-role:
+            rules:
+              - apiGroups: [""]
+                resources: ["pods"]
+                verbs: ["get", "list"]
+    asserts:
+      - isKind:
+          of: Role
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: my-role
+        documentIndex: 0
+
+  - it: should render a RoleBinding
+    set:
+      rbac:
+        roleBindings:
+          my-rb:
+            roleRef: my-role
+            subjects:
+              - kind: ServiceAccount
+                name: my-sa
+                namespace: default
+    asserts:
+      - isKind:
+          of: RoleBinding
+        documentIndex: 0
+      - equal:
+          path: roleRef.name
+          value: my-role
+        documentIndex: 0
+
+  - it: should render a ClusterRole
+    set:
+      rbac:
+        clusterRoles:
+          my-cr:
+            rules:
+              - apiGroups: [""]
+                resources: ["nodes"]
+                verbs: ["get", "list"]
+    asserts:
+      - isKind:
+          of: ClusterRole
+        documentIndex: 0
+
+  - it: should render a ClusterRoleBinding
+    set:
+      rbac:
+        clusterRoleBindings:
+          my-crb:
+            roleRef: my-cr
+            subjects:
+              - kind: ServiceAccount
+                name: my-sa
+                namespace: default
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+        documentIndex: 0
+      - equal:
+          path: roleRef.name
+          value: my-cr
+        documentIndex: 0

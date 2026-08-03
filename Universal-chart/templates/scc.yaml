@@ -1,0 +1,80 @@
+{{- range $name, $spec := .Values.scc }}
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "universal-chart.labels" $ | nindent 4 }}
+  {{- with merge ($.Values.commonAnnotations | default dict) ($spec.annotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- with $spec.priority }}
+priority: {{ . }}
+{{- end }}
+allowPrivilegedContainer: {{ $spec.allowPrivilegedContainer | default false }}
+allowPrivilegeEscalation: {{ if hasKey $spec "allowPrivilegeEscalation" }}{{ $spec.allowPrivilegeEscalation }}{{ else }}false{{ end }}
+{{- with $spec.defaultAddCapabilities }}
+defaultAddCapabilities:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $spec.allowedCapabilities }}
+allowedCapabilities:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+requiredDropCapabilities:
+  {{- toYaml ($spec.requiredDropCapabilities | default (list "ALL")) | nindent 2 }}
+runAsUser:
+  type: {{ ($spec.runAsUser).type | default "MustRunAsRange" }}
+  {{- with ($spec.runAsUser).uid }}
+  uid: {{ . }}
+  {{- end }}
+  {{- with ($spec.runAsUser).uidRangeMin }}
+  uidRangeMin: {{ . }}
+  {{- end }}
+  {{- with ($spec.runAsUser).uidRangeMax }}
+  uidRangeMax: {{ . }}
+  {{- end }}
+seLinuxContext:
+  type: {{ ($spec.seLinuxContext).type | default "MustRunAs" }}
+fsGroup:
+  type: {{ ($spec.fsGroup).type | default "MustRunAs" }}
+  {{- with ($spec.fsGroup).ranges }}
+  ranges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+supplementalGroups:
+  type: {{ ($spec.supplementalGroups).type | default "RunAsAny" }}
+  {{- with ($spec.supplementalGroups).ranges }}
+  ranges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+volumes:
+  {{- toYaml ($spec.volumes | default (list "configMap" "downwardAPI" "emptyDir" "persistentVolumeClaim" "projected" "secret")) | nindent 2 }}
+allowHostNetwork: {{ $spec.allowHostNetwork | default false }}
+allowHostPorts: {{ $spec.allowHostPorts | default false }}
+allowHostPID: {{ $spec.allowHostPID | default false }}
+allowHostIPC: {{ $spec.allowHostIPC | default false }}
+readOnlyRootFilesystem: {{ $spec.readOnlyRootFilesystem | default false }}
+{{- with $spec.users }}
+users:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $spec.groups }}
+groups:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $spec.seccompProfiles }}
+seccompProfiles:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $spec.allowedUnsafeSysctls }}
+allowedUnsafeSysctls:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $spec.forbiddenSysctls }}
+forbiddenSysctls:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,39 @@
+{{- range $name, $spec := .Values.cronjobs }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ printf "%s-%s" (include "universal-chart.fullname" $) $name }}
+  labels:
+    {{- include "universal-chart.labels" $ | nindent 4 }}
+  {{- with merge ($.Values.commonAnnotations | default dict) ($spec.annotations | default dict) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ $spec.schedule | quote }}
+  concurrencyPolicy: {{ $spec.concurrencyPolicy | default "Forbid" }}
+  successfulJobsHistoryLimit: {{ $spec.successfulJobsHistoryLimit | default 3 }}
+  failedJobsHistoryLimit: {{ $spec.failedJobsHistoryLimit | default 1 }}
+  {{- if hasKey $spec "suspend" }}
+  suspend: {{ $spec.suspend }}
+  {{- end }}
+  {{- with $spec.startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ . }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ $spec.jobTemplate.backoffLimit | default 3 }}
+      {{- with $spec.jobTemplate.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ . }}
+      {{- end }}
+      {{- with $spec.jobTemplate.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ . }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "universal-chart.selectorLabels" $ | nindent 12 }}
+        spec:
+          {{- include "universal-chart.jobPodSpec" (dict "Values" $.Values "Chart" $.Chart "Release" $.Release "job" (merge $spec.jobTemplate (dict "name" $name))) | nindent 10 }}
+{{- end }}

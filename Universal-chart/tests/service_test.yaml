@@ -1,0 +1,176 @@
+suite: Service
+templates:
+  - templates/service.yaml
+tests:
+  - it: should render by default
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: should not render when disabled
+    set:
+      service.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should set service type
+    set:
+      service.type: LoadBalancer
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+
+  - it: should set service ports
+    set:
+      service:
+        enabled: true
+        ports:
+          http:
+            port: 80
+            targetPort: 8080
+            protocol: TCP
+          grpc:
+            port: 9090
+            targetPort: grpc
+    asserts:
+      - equal:
+          path: spec.ports[0].name
+          value: grpc
+      - equal:
+          path: spec.ports[0].port
+          value: 9090
+      - equal:
+          path: spec.ports[1].name
+          value: http
+      - equal:
+          path: spec.ports[1].port
+          value: 80
+
+  - it: should set nodePort
+    set:
+      service:
+        enabled: true
+        type: NodePort
+        ports:
+          http:
+            port: 80
+            targetPort: http
+            nodePort: 30080
+    asserts:
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30080
+
+  - it: should set clusterIP for headless service
+    set:
+      service:
+        enabled: true
+        clusterIP: None
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.clusterIP
+          value: None
+
+  - it: should set loadBalancerIP
+    set:
+      service:
+        enabled: true
+        type: LoadBalancer
+        loadBalancerIP: 10.0.0.1
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.loadBalancerIP
+          value: "10.0.0.1"
+
+  - it: should set externalTrafficPolicy
+    set:
+      service:
+        enabled: true
+        externalTrafficPolicy: Local
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+
+  - it: should set sessionAffinity
+    set:
+      service:
+        enabled: true
+        sessionAffinity: ClientIP
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.sessionAffinity
+          value: ClientIP
+
+  - it: should set service annotations
+    set:
+      service:
+        enabled: true
+        annotations:
+          my-annotation: value
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: metadata.annotations["my-annotation"]
+          value: value
+
+  - it: should set service labels
+    set:
+      service:
+        enabled: true
+        labels:
+          custom: label
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: metadata.labels.custom
+          value: label
+
+  - it: should omit selector for ExternalName
+    set:
+      service:
+        enabled: true
+        type: ExternalName
+        externalName: my.db.example.com
+        ports:
+          http:
+            port: 80
+            targetPort: http
+    asserts:
+      - equal:
+          path: spec.externalName
+          value: my.db.example.com
+      - isNull:
+          path: spec.selector
+
+  - it: should include selector for non-ExternalName
+    asserts:
+      - isNotNull:
+          path: spec.selector

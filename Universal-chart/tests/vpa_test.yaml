@@ -1,0 +1,54 @@
+suite: VPA
+templates:
+  - templates/vpa.yaml
+tests:
+  - it: should not render by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when enabled
+    set:
+      vpa:
+        enabled: true
+    asserts:
+      - isKind:
+          of: VerticalPodAutoscaler
+      - equal:
+          path: apiVersion
+          value: autoscaling.k8s.io/v1
+
+  - it: should set update mode
+    set:
+      vpa:
+        enabled: true
+        updateMode: "Off"
+    asserts:
+      - equal:
+          path: spec.updatePolicy.updateMode
+          value: "Off"
+
+  - it: should set resource policy
+    set:
+      vpa:
+        enabled: true
+        resourcePolicy:
+          containerPolicies:
+            - containerName: "*"
+              minAllowed:
+                cpu: 50m
+                memory: 64Mi
+    asserts:
+      - equal:
+          path: spec.resourcePolicy.containerPolicies[0].containerName
+          value: "*"
+
+  - it: should target correct workload type
+    set:
+      workload.type: statefulset
+      vpa:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.targetRef.kind
+          value: Statefulset

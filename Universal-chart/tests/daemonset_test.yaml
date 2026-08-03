@@ -1,0 +1,44 @@
+suite: DaemonSet
+templates:
+  - templates/daemonset.yaml
+tests:
+  - it: should not render by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render when workload type is daemonset
+    set:
+      workload.type: daemonset
+    asserts:
+      - isKind:
+          of: DaemonSet
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-universal-chart
+
+  - it: should not have replicas field
+    set:
+      workload.type: daemonset
+    asserts:
+      - isNull:
+          path: spec.replicas
+
+  - it: should set updateStrategy
+    set:
+      workload.type: daemonset
+      strategy:
+        type: OnDelete
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: OnDelete
+
+  - it: should set revision history limit
+    set:
+      workload.type: daemonset
+      revisionHistoryLimit: 10
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 10
