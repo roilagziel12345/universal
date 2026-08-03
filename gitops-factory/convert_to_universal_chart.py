@@ -552,7 +552,7 @@ def handle_workload(doc: dict, ctx: MicroserviceContext, kind: str) -> None:
         v["volumes"] = remap_volumes(named_list_to_map(volumes), ctx)
 
 
-def build_route_entry(doc: dict) -> dict:
+def build_route_entry(doc: dict, ctx: MicroserviceContext) -> dict:
     spec = doc.get("spec", {}) or {}
     entry = {"enabled": True}
     if spec.get("host"):
@@ -568,7 +568,9 @@ def build_route_entry(doc: dict) -> dict:
         entry["wildcardPolicy"] = spec["wildcardPolicy"]
     to_name = (spec.get("to") or {}).get("name")
     if to_name:
-        entry["serviceName"] = to_name
+        # Remap through the Service name-claiming pass, same as env/envFrom/volumes,
+        # in case the target Service got renamed by collision resolution.
+        entry["serviceName"] = ctx.name_map["Service"].get(to_name, to_name)
     ann = clean_annotations((doc.get("metadata") or {}).get("annotations"))
     if ann:
         entry["annotations"] = ann
@@ -576,12 +578,18 @@ def build_route_entry(doc: dict) -> dict:
 
 
 def handle_route(doc: dict, ctx: MicroserviceContext, final_name: str) -> None:
-    entry = build_route_entry(doc)
+    entry = build_route_entry(doc, ctx)
     if not ctx.primary_route_set:
         ctx.primary_route_set = True
+        # The primary route's template always targets this release's own
+        # fullname Service directly (ignores serviceName) — drop it here so
+        # it doesn't look like a meaningful override in the generated values.
+        entry.pop("serviceName", None)
         ctx.values["route"] = entry
     else:
-        entry.pop("serviceName", None)
+        # Extra routes DO honor serviceName (defaults to the fullname Service
+        # only when absent) — an extra route fronting a DIFFERENT backend
+        # (e.g. an admin Service) depends on this being preserved.
         ctx.values.setdefault("routes", {})[final_name] = entry
 
 
@@ -1441,3 +1449,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+#

@@ -61,7 +61,6 @@ revisionHistoryLimit: 10
 route:
   enabled: true
   host: logistics-svc-edge-1.apps.example.com
-  serviceName: logistics-svc-edge-1
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -70,6 +69,7 @@ routes:
   logistics-svc-edge-1-admin-console:
     enabled: true
     host: logistics-svc-edge-1-admin.apps.example.com
+    serviceName: logistics-svc-edge-1-admin
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

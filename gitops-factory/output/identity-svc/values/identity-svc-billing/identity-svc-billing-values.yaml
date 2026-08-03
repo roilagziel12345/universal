@@ -70,7 +70,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: identity-svc-billing
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

@@ -64,7 +64,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: logistics-svc-notify-2
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

@@ -93,7 +93,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: payments-svc-gateway
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -102,6 +101,7 @@ routes:
   payments-svc-gateway-alt:
     enabled: true
     host: payments-svc-gateway-metrics.apps.example.com
+    serviceName: payments-svc-gateway-metrics
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

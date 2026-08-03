@@ -93,7 +93,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: identity-svc-gateway
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -102,6 +101,7 @@ routes:
   identity-svc-gateway-alt:
     enabled: true
     host: identity-svc-gateway-metrics.apps.example.com
+    serviceName: identity-svc-gateway-metrics
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

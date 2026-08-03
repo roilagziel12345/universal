@@ -93,7 +93,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: platform-ops-gateway
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -102,6 +101,7 @@ routes:
   platform-ops-gateway-alt:
     enabled: true
     host: platform-ops-gateway-metrics.apps.example.com
+    serviceName: platform-ops-gateway-metrics
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

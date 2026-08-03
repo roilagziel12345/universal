@@ -58,7 +58,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: payments-svc-checkout
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

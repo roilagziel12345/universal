@@ -64,7 +64,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: analytics-svc-svc-16
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

@@ -73,7 +73,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: platform-ops-alpha
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

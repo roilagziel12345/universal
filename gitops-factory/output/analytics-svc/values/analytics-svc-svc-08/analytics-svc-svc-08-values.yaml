@@ -61,7 +61,6 @@ revisionHistoryLimit: 10
 route:
   enabled: true
   host: analytics-svc-svc-08.apps.example.com
-  serviceName: analytics-svc-svc-08
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -70,6 +69,7 @@ routes:
   analytics-svc-svc-08-admin-console:
     enabled: true
     host: analytics-svc-svc-08-admin.apps.example.com
+    serviceName: analytics-svc-svc-08-admin
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

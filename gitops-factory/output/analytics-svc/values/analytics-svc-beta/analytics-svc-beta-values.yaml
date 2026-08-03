@@ -76,7 +76,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: analytics-svc-beta
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

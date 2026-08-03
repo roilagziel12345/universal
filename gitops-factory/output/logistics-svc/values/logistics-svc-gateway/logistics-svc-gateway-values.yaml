@@ -93,7 +93,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: logistics-svc-gateway
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -102,6 +101,7 @@ routes:
   logistics-svc-gateway-alt:
     enabled: true
     host: logistics-svc-gateway-metrics.apps.example.com
+    serviceName: logistics-svc-gateway-metrics
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

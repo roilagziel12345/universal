@@ -53,7 +53,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: identity-svc-svc-12
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

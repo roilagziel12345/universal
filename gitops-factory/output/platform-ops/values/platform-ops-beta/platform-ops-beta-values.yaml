@@ -73,7 +73,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: platform-ops-beta
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

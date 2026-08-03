@@ -64,7 +64,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: platform-ops-svc-25
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

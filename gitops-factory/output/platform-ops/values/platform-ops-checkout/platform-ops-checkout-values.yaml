@@ -61,7 +61,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: platform-ops-checkout
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect

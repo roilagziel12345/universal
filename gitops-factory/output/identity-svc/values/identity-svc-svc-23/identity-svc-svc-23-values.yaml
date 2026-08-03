@@ -61,7 +61,6 @@ revisionHistoryLimit: 10
 route:
   enabled: true
   host: identity-svc-svc-23.apps.example.com
-  serviceName: identity-svc-svc-23
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -70,6 +69,7 @@ routes:
   identity-svc-svc-23-admin-console:
     enabled: true
     host: identity-svc-svc-23-admin.apps.example.com
+    serviceName: identity-svc-svc-23-admin
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

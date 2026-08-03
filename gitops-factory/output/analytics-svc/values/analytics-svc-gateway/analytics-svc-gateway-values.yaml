@@ -93,7 +93,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: analytics-svc-gateway
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -102,6 +101,7 @@ routes:
   analytics-svc-gateway-alt:
     enabled: true
     host: analytics-svc-gateway-metrics.apps.example.com
+    serviceName: analytics-svc-gateway-metrics
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

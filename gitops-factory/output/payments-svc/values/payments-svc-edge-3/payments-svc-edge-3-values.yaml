@@ -61,7 +61,6 @@ revisionHistoryLimit: 10
 route:
   enabled: true
   host: payments-svc-edge-3.apps.example.com
-  serviceName: payments-svc-edge-3
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
@@ -70,6 +69,7 @@ routes:
   payments-svc-edge-3-admin-console:
     enabled: true
     host: payments-svc-edge-3-admin.apps.example.com
+    serviceName: payments-svc-edge-3-admin
     targetPort: http
     tls:
       insecureEdgeTerminationPolicy: Redirect

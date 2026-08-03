@@ -53,7 +53,6 @@ restartPolicy: Always
 revisionHistoryLimit: 10
 route:
   enabled: true
-  serviceName: logistics-svc-svc-19
   targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
