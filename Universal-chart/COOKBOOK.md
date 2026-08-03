@@ -42,6 +42,7 @@ A practical reference for every feature with real-world examples.
 35. [Config/RBAC-only Releases (workload.type: none)](#35-config-rbac-only-releases)
 36. [Multiple Services (map-based)](#36-multiple-services)
 37. [Multiple OpenShift Routes (map-based)](#37-multiple-openshift-routes)
+38. [External Secrets Operator (SecretStore / ClusterSecretStore / ExternalSecret)](#38-external-secrets-operator)
 
 ---
 
@@ -1842,3 +1843,109 @@ scc:
     users:
       - system:serviceaccount:<namespace>:<serviceaccount-name>
 ```
+
+---
+
+## 38. External Secrets Operator
+
+This chart does **not** handle secrets-manager integration on its own — the plain
+`secrets` map (§17) is real Kubernetes `Secret` objects with `data`/`stringData` you
+supply directly in values, which is fine for cluster-local secrets but means anything
+from Vault/AWS Secrets Manager/Azure Key Vault/GCP Secret Manager/etc. has to be
+base64'd into your values by hand, defeating the point of a secrets manager.
+
+For that, the chart renders [External Secrets Operator](https://external-secrets.io)
+(ESO) custom resources instead — **the operator's CRDs must already be installed on
+the cluster**; this chart only renders `SecretStore`/`ClusterSecretStore`/
+`ExternalSecret` objects, it does not install ESO itself. Once ESO reconciles an
+`ExternalSecret`, it produces a real Kubernetes `Secret` that the rest of this chart
+(`env`, `envFrom`, `volumes`) consumes exactly like any other Secret — nothing
+downstream needs to know it came from a secrets manager.
+
+### SecretStore (namespaced) — where THIS namespace pulls from
+
+```yaml
+secretStores:
+  vault-backend:
+    provider:
+      vault:
+        server: https://vault.example.com:8200
+        path: secret
+        version: v2
+        auth:
+          kubernetes:
+            mountPath: kubernetes
+            role: my-role
+            serviceAccountRef:
+              name: my-app
+```
+
+If your platform team already manages a shared `SecretStore`/`ClusterSecretStore`,
+skip this section entirely and just reference its name from `externalSecrets` below
+— most apps never need to declare their own store.
+
+### ClusterSecretStore (cluster-scoped) — shared across every namespace
+
+Same shape as `SecretStore`, but cluster-scoped — readable by `ExternalSecret`s in
+ANY namespace:
+
+```yaml
+clusterSecretStores:
+  vault-cluster-backend:
+    provider:
+      vault:
+        server: https://vault.example.com:8200
+        path: secret
+        version: v2
+```
+
+> Cluster-scoped kinds can't be safely owned by more than one Helm release (same
+> reasoning as `storageClasses`/`scc` elsewhere in this chart) — only put an entry
+> here if THIS release is genuinely meant to own that cluster-wide definition (e.g.
+> a platform/namespace-shared release), not per application microservice. If you're
+> generating values with `gitops-factory/convert_to_universal_chart.py`, route
+> `ClusterSecretStore` through its cluster-scoped dedup path rather than declaring
+> it per microservice.
+
+### ExternalSecret — sync remote keys into a real Secret
+
+```yaml
+externalSecrets:
+  db-credentials:
+    secretStoreRef:
+      name: vault-backend
+      kind: SecretStore        # or ClusterSecretStore — default SecretStore
+    refreshInterval: 1h        # default 1h
+    target:
+      name: db-credentials     # defaults to the map key
+      creationPolicy: Owner    # default Owner
+    data:
+      - secretKey: password
+        remoteRef:
+          key: secret/data/myapp/db
+          property: password
+
+  # Pull an entire remote secret instead of listing keys one by one:
+  all-app-secrets:
+    secretStoreRef:
+      name: vault-backend
+    dataFrom:
+      - extract:
+          key: secret/data/myapp/all
+```
+
+Once ESO syncs `db-credentials` into a real `Secret` named `db-credentials`, consume
+it exactly like any other secret in this chart:
+
+```yaml
+env:
+  DB_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-credentials
+        key: password
+```
+
+> **apiVersion**: all three CRDs share `externalSecretsApiVersion` (default
+> `external-secrets.io/v1beta1`) — override it once at the top level if your ESO
+> install uses a different API version.

@@ -335,6 +335,54 @@ secrets: {}
 #     DB_PASSWORD: "secret"
 
 # ---------------------------------------------------------------------------
+# External Secrets Operator (https://external-secrets.io) — requires the ESO
+# CRDs installed on the cluster; this chart only renders the custom
+# resources, not the operator. All three are MAP-BASED (keyed by name).
+# ---------------------------------------------------------------------------
+externalSecretsApiVersion: external-secrets.io/v1beta1
+
+# SecretStore — namespaced, defines where ExternalSecrets in THIS namespace
+# pull from (Vault, AWS Secrets Manager, Azure Key Vault, GCP Secret
+# Manager, ...). Skip this if you already have one and just reference its
+# name from externalSecrets below.
+secretStores: {}
+# vault-backend:
+#   provider:
+#     vault:
+#       server: https://vault.example.com:8200
+#       path: secret
+#       version: v2
+#       auth:
+#         kubernetes:
+#           mountPath: kubernetes
+#           role: my-role
+#           serviceAccountRef:
+#             name: my-app
+
+# ClusterSecretStore — cluster-scoped counterpart to SecretStore. Usually
+# owned by a platform release, not by individual microservices — see the
+# comment in templates/clustersecretstore.yaml before using this per-app.
+clusterSecretStores: {}
+
+# ExternalSecret — syncs remote keys into a REAL Kubernetes Secret (named
+# after the map key by default) that the rest of this chart consumes
+# exactly like any other Secret (env/envFrom/volumes reference it by name).
+externalSecrets: {}
+# db-credentials:
+#   secretStoreRef:
+#     name: vault-backend
+#     kind: SecretStore        # or ClusterSecretStore
+#   refreshInterval: 1h
+#   target:
+#     name: db-credentials     # defaults to the map key
+#     creationPolicy: Owner
+#   data:
+#     - secretKey: password
+#       remoteRef:
+#         key: secret/data/myapp/db
+#         property: password
+
+# ---------------------------------------------------------------------------
 # PVCs — MAP-BASED (keyed by PVC name)
 # ---------------------------------------------------------------------------
 pvc: {}

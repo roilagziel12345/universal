@@ -65,6 +65,9 @@ universal-chart/
 │   ├── scc.yaml                      # OpenShift SecurityContextConstraints
 │   ├── configmap.yaml                # loops over .Values.configMaps
 │   ├── secret.yaml                   # loops over .Values.secrets
+│   ├── secretstore.yaml              # loops over .Values.secretStores (External Secrets Operator)
+│   ├── clustersecretstore.yaml       # loops over .Values.clusterSecretStores (cluster-scoped)
+│   ├── externalsecret.yaml           # loops over .Values.externalSecrets (External Secrets Operator)
 │   ├── pvc.yaml                      # loops over .Values.pvc
 │   ├── pv.yaml                       # loops over .Values.persistentVolumes
 │   ├── storageclass.yaml             # loops over .Values.storageClasses
@@ -87,6 +90,9 @@ universal-chart/
 │   ├── ingress_test.yaml
 │   ├── configmap_test.yaml
 │   ├── secret_test.yaml
+│   ├── secretstore_test.yaml
+│   ├── clustersecretstore_test.yaml
+│   ├── externalsecret_test.yaml
 │   ├── hpa_test.yaml
 │   ├── vpa_test.yaml
 │   ├── pdb_test.yaml
@@ -432,6 +438,9 @@ helm unittest . --color --debug
 | `ingress_test.yaml` | Ingress hosts, TLS, className, annotations |
 | `configmap_test.yaml` | ConfigMap creation from map-based values |
 | `secret_test.yaml` | Secret creation, type override |
+| `secretstore_test.yaml` | External Secrets Operator SecretStore — provider passthrough, apiVersion override |
+| `clustersecretstore_test.yaml` | External Secrets Operator ClusterSecretStore (cluster-scoped) |
+| `externalsecret_test.yaml` | External Secrets Operator ExternalSecret — secretStoreRef kind, target name/creationPolicy defaults, data vs dataFrom |
 | `hpa_test.yaml` | HPA enabled/disabled, min/max replicas, metrics |
 | `vpa_test.yaml` | VPA enabled/disabled, update mode |
 | `pdb_test.yaml` | PDB minAvailable / maxUnavailable |
@@ -516,6 +525,7 @@ workload:
 | OpenShift Route | `route.enabled: true` | Alternative to Ingress |
 | Extra Services | `services` | Map-keyed by Service name, beyond the primary `service` |
 | Extra OpenShift Routes | `routes` | Map-keyed by Route name, beyond the primary `route` |
+| External Secrets Operator | `secretStores`, `clusterSecretStores`, `externalSecrets` | Requires the ESO CRDs on-cluster; syncs into real Secrets consumed like any other |
 | Pod anti-affinity | `affinity.podAntiAffinity` | Soft or hard node spread |
 | Topology spread | `topologySpreadConstraints[]` | Fine-grained scheduling |
 | Auto-restart on CM/Secret change | `checksums.enabled: true` | Rolling restart via annotations |
