@@ -1,0 +1,315 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: identity-svc-notify-2-sa
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d0962bbd-32c8-42ce-8e64-380a64104a13
+  resourceVersion: '3636777'
+  generation: 10
+  creationTimestamp: '2025-08-31T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-31T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: identity-svc-notify-2-sa-token-a1b2c
+- name: identity-svc-notify-2-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: identity-svc-notify-2-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-svc-notify-2
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 4cd884f6-b030-4be8-98db-6db6aac3f802
+  resourceVersion: '9253271'
+  generation: 5
+  creationTimestamp: '2025-09-12T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-12T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: identity-svc-notify-2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: identity-svc-notify-2
+        app.kubernetes.io/name: identity-svc-notify-2
+    spec:
+      containers:
+      - name: identity-svc-notify-2
+        image: registry.example.com/identity-svc-notify-2:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: identity-svc-notify-2-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: identity-svc-notify-2-sa
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 5
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: identity-svc-notify-2-3074232200
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2-3074232200
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fcb7582c-f20a-4476-917b-5f890b4d3fd1
+  resourceVersion: '6913102'
+  generation: 5
+  creationTimestamp: '2025-08-14T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-14T08:11:22Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: identity-svc-notify-2
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-svc-notify-2
+  template:
+    metadata:
+      labels:
+        app: identity-svc-notify-2
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: identity-svc-notify-2-69446-cbxyz
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2-69446-cbxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d2aa8c08-0872-42cf-af30-388ce8cc3fdc
+  resourceVersion: '7475356'
+  generation: 7
+  creationTimestamp: '2026-05-11T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-11T08:11:22Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: identity-svc-notify-2-rs
+    controller: true
+spec:
+  containers:
+  - name: identity-svc-notify-2
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc-notify-2
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f4cb5260-5437-4cb4-bab2-2219d2834986
+  resourceVersion: '5807484'
+  generation: 10
+  creationTimestamp: '2026-04-17T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-17T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: identity-svc-notify-2
+  sessionAffinity: None
+  clusterIP: 172.30.247.119
+  clusterIPs:
+  - 172.30.247.119
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-svc-notify-2-config
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5d6eca73-fcca-47d8-b6b4-08573bec599f
+  resourceVersion: '5457240'
+  generation: 12
+  creationTimestamp: '2025-07-28T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-28T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '50'
+  FEATURE_FLAG_BETA: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-svc-notify-2-secret
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2778ad48-2865-4129-ae7d-f8474c1c970c
+  resourceVersion: '6789354'
+  generation: 3
+  creationTimestamp: '2026-02-04T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-04T08:11:22Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: ZjVkZDNmNjNlMmUyNDk1NTlkNzgzMzVhMjRhNDRmNDk=
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: identity-svc-notify-2
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-notify-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a741d793-b91a-4183-840b-4316cffcbeae
+  resourceVersion: '7926111'
+  generation: 2
+  creationTimestamp: '2026-03-29T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-29T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  selector:
+    matchLabels:
+      app: identity-svc-notify-2
+  minAvailable: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 552db085-1097-4345-8d59-181f3e844bf3
+  resourceVersion: '2032288'
+  generation: 7
+  creationTimestamp: '2026-03-04T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-04T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '

@@ -1,0 +1,262 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-svc-19-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-19-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 99ec3766-83b4-4000-ab40-cadd7e0922af
+  resourceVersion: '4860225'
+  generation: 7
+  creationTimestamp: '2025-08-03T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-03T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-svc-19-sa-token-a1b2c
+- name: platform-ops-svc-19-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-svc-19-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-svc-19
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-19
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2bb169d7-2cbd-414c-a19f-742cd7c9ac96
+  resourceVersion: '4645782'
+  generation: 9
+  creationTimestamp: '2026-05-18T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-18T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-svc-19
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-svc-19
+        app.kubernetes.io/name: platform-ops-svc-19
+    spec:
+      containers:
+      - name: platform-ops-svc-19
+        image: registry.example.com/platform-ops-svc-19:2.3.1
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: platform-ops-svc-19-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: platform-ops-svc-19-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 8
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: platform-ops-svc-19-2769661076
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-19-2769661076
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c3415051-a989-4fdf-8002-bde9f4e7ca5f
+  resourceVersion: '731179'
+  generation: 10
+  creationTimestamp: '2026-05-02T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-02T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-svc-19
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-ops-svc-19
+  template:
+    metadata:
+      labels:
+        app: platform-ops-svc-19
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: platform-ops-svc-19-33593-scxyz
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-19-33593-scxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fd31a81d-fbcb-46c2-810a-136f78729559
+  resourceVersion: '5153293'
+  generation: 6
+  creationTimestamp: '2025-09-12T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-12T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: platform-ops-svc-19-rs
+    controller: true
+spec:
+  containers:
+  - name: platform-ops-svc-19
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-svc-19
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-19
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: bd8f74e0-47eb-453f-a950-5478e63d7a54
+  resourceVersion: '4053366'
+  generation: 4
+  creationTimestamp: '2025-10-18T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-18T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-svc-19
+  sessionAffinity: None
+  clusterIP: 172.30.214.2
+  clusterIPs:
+  - 172.30.214.2
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-ops-svc-19-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-19-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1521327b-f4b2-47d3-bc4a-7b9a56df3001
+  resourceVersion: '6171696'
+  generation: 9
+  creationTimestamp: '2025-09-17T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-17T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '50'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-svc-19-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-19-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 39ed347c-353f-400a-95c2-23cdf4a15ad8
+  resourceVersion: '3778843'
+  generation: 8
+  creationTimestamp: '2025-11-13T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-13T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: YmFhODNiMzIyNjM3NDAwZjhiYTMzNmIwY2QxNzc3YzI=

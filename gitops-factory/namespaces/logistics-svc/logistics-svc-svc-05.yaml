@@ -1,0 +1,262 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logistics-svc-svc-05-sa
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-05-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e0a405c3-ad3a-42b0-bc37-a41597f3668f
+  resourceVersion: '3806007'
+  generation: 11
+  creationTimestamp: '2025-09-20T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-20T08:11:26Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: logistics-svc-svc-05-sa-token-a1b2c
+- name: logistics-svc-svc-05-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: logistics-svc-svc-05-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-svc-svc-05
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-05
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fd2f6a63-a63c-4858-b031-14f46135e719
+  resourceVersion: '1405378'
+  generation: 4
+  creationTimestamp: '2026-02-11T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-11T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: logistics-svc-svc-05
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-svc-05
+        app.kubernetes.io/name: logistics-svc-svc-05
+    spec:
+      containers:
+      - name: logistics-svc-svc-05
+        image: registry.example.com/logistics-svc-svc-05:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: logistics-svc-svc-05-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: logistics-svc-svc-05-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 6
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: logistics-svc-svc-05-9514255777
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-05-9514255777
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 496b8d26-97c9-4e56-8609-af9b12f31a27
+  resourceVersion: '1588575'
+  generation: 12
+  creationTimestamp: '2026-05-06T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-06T08:11:26Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: logistics-svc-svc-05
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-svc-svc-05
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-svc-05
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logistics-svc-svc-05-97821-mrxyz
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-05-97821-mrxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 95a23723-2c87-4565-8743-c8f0a9850310
+  resourceVersion: '4549526'
+  generation: 4
+  creationTimestamp: '2026-07-25T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-25T08:11:26Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: logistics-svc-svc-05-rs
+    controller: true
+spec:
+  containers:
+  - name: logistics-svc-svc-05
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-svc-05
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-05
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f6172914-386d-42c1-927f-529f5db0550e
+  resourceVersion: '5980098'
+  generation: 5
+  creationTimestamp: '2026-06-26T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-26T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-svc-05
+  sessionAffinity: None
+  clusterIP: 172.30.127.178
+  clusterIPs:
+  - 172.30.127.178
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logistics-svc-svc-05-config
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-05-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2333f9c7-b3ae-4cab-8d6e-6eeadd1473bb
+  resourceVersion: '6574950'
+  generation: 8
+  creationTimestamp: '2026-07-06T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-06T08:11:26Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '50'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logistics-svc-svc-05-secret
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-05-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2669a594-232f-4cc3-80b5-2138773934b4
+  resourceVersion: '7140612'
+  generation: 3
+  creationTimestamp: '2025-07-20T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-20T08:11:26Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: NDkyNjk1MzBhYzVhNDU0ODhlOTNjZDMyNWMwZTVhYzI=

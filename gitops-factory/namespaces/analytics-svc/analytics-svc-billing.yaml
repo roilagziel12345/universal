@@ -1,0 +1,285 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-billing-sa
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-billing-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6eedfb13-1661-4a32-8411-0cceeec3a34d
+  resourceVersion: '1382825'
+  generation: 12
+  creationTimestamp: '2025-07-20T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-20T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: analytics-svc-billing-sa-token-a1b2c
+- name: analytics-svc-billing-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: analytics-svc-billing-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-svc-billing
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 25c6864e-292e-426d-a10a-262a263c05ce
+  resourceVersion: '623352'
+  generation: 10
+  creationTimestamp: '2025-09-10T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-10T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: analytics-svc-billing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-billing
+        app.kubernetes.io/name: analytics-svc-billing
+    spec:
+      containers:
+      - name: analytics-svc-billing
+        image: registry.example.com/analytics-svc-billing:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: analytics-svc-billing-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: analytics-svc-billing-sa
+status:
+  replicas: 3
+  readyReplicas: 3
+  availableReplicas: 3
+  observedGeneration: 10
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: analytics-svc-billing-3534186676
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-billing-3534186676
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ce9108cc-27ed-4382-bc5e-1c59e1b47e35
+  resourceVersion: '9354211'
+  generation: 5
+  creationTimestamp: '2026-07-12T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-12T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-svc-billing
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-svc-billing
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-billing
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: analytics-svc-billing-81233-vsxyz
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-billing-81233-vsxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 74c4fdb5-bf83-4bf7-9da8-0e4e467a8bcf
+  resourceVersion: '2593647'
+  generation: 6
+  creationTimestamp: '2025-08-30T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-30T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: analytics-svc-billing-rs
+    controller: true
+spec:
+  containers:
+  - name: analytics-svc-billing
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-billing
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 447a7d59-78d7-4bc4-bbc5-97327ea88876
+  resourceVersion: '9991859'
+  generation: 12
+  creationTimestamp: '2025-06-30T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-06-30T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-billing
+  sessionAffinity: None
+  clusterIP: 172.30.200.58
+  clusterIPs:
+  - 172.30.200.58
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-svc-billing-config
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-billing-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a63d24fc-1648-4857-9d90-f1ee01e6e41f
+  resourceVersion: '8507451'
+  generation: 9
+  creationTimestamp: '2025-12-05T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-05T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '100'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: analytics-svc-billing-secret
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-billing-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9fe6344f-ed83-4ac1-aab2-94e0dbf5060c
+  resourceVersion: '6756950'
+  generation: 6
+  creationTimestamp: '2026-06-14T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-14T08:11:30Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: OWY1Y2Y4N2MzMGZhNGE2Zjg4MTFiMmM4NzMyZGFjZGI=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: app-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e094807e-8be7-46cd-abc3-5f756fac87e0
+  resourceVersion: '2882393'
+  generation: 9
+  creationTimestamp: '2025-09-19T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-19T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_X: 'off'
+  EXTRA: '1'

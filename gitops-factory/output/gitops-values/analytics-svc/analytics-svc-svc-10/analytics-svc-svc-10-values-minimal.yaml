@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'analytics-svc-svc-10' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over analytics-svc-svc-10-values.yaml.
+
+image:
+  repository: registry.example.com/analytics-svc-svc-10
+  tag: 1.0.0

@@ -1,0 +1,280 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-edge-2
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-edge-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: dfd18668-356e-47b0-9cc9-0ff210ccde78
+  resourceVersion: '5624481'
+  generation: 8
+  creationTimestamp: '2026-02-21T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-21T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-edge-2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-edge-2
+        app.kubernetes.io/name: platform-ops-edge-2
+    spec:
+      containers:
+      - name: platform-ops-edge-2
+        image: registry.example.com/platform-ops-edge-2:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 9
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-edge-2
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-edge-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a473223b-d8a0-4a57-9842-225bb04ea96b
+  resourceVersion: '2424928'
+  generation: 10
+  creationTimestamp: '2025-08-30T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-30T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-edge-2
+  sessionAffinity: None
+  clusterIP: 172.30.67.53
+  clusterIPs:
+  - 172.30.67.53
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-edge-2-admin
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-edge-2-admin
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9cd6c34f-e3df-4993-b1aa-027b9a75c0ab
+  resourceVersion: '5284132'
+  generation: 12
+  creationTimestamp: '2026-05-21T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-21T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8081
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-edge-2
+  sessionAffinity: None
+  clusterIP: 172.30.103.221
+  clusterIPs:
+  - 172.30.103.221
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: platform-ops-edge-2
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-edge-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ca4fb195-35cf-4b0d-8d5c-ce0e212ef7c3
+  resourceVersion: '8887997'
+  generation: 3
+  creationTimestamp: '2025-08-03T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-03T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: platform-ops-edge-2
+    weight: 100
+  port:
+    targetPort: http
+  host: platform-ops-edge-2.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: platform-ops-edge-2.apps.example.com
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: platform-ops-edge-2-admin-console
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-edge-2-admin-console
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3d56f6ef-2562-4ba0-bb80-40524dd7eca1
+  resourceVersion: '2535253'
+  generation: 11
+  creationTimestamp: '2025-12-22T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-22T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: platform-ops-edge-2-admin
+    weight: 100
+  port:
+    targetPort: http
+  host: platform-ops-edge-2-admin.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: platform-ops-edge-2-admin.apps.example.com
+    routerName: default
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-ops-edge-2-allow-ingress
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-edge-2-allow-ingress
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 22447166-fe81-420f-9964-48f052c8c051
+  resourceVersion: '2751604'
+  generation: 6
+  creationTimestamp: '2025-10-14T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-14T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: platform-ops-edge-2
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-ops-edge-2-deny-egress-external
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-edge-2-deny-egress-external
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2bdd514b-97e7-41f1-8349-b9e40cc86e8b
+  resourceVersion: '9450618'
+  generation: 9
+  creationTimestamp: '2026-06-26T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-26T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: platform-ops-edge-2
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP

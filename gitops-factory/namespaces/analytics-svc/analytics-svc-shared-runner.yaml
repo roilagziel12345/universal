@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-svc-shared-runner
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-shared-runner
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 781fa7d3-4f30-47be-bffc-ae0f013dbac8
+  resourceVersion: '220696'
+  generation: 7
+  creationTimestamp: '2025-11-06T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-06T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: analytics-svc-shared-runner
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-shared-runner
+        app.kubernetes.io/name: analytics-svc-shared-runner
+    spec:
+      containers:
+      - name: analytics-svc-shared-runner
+        image: registry.example.com/analytics-svc-shared-runner:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: namespace-deployer
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 4
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-shared-runner
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-shared-runner
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2f6ca2de-5127-4883-947d-c8bfc41af06d
+  resourceVersion: '1888169'
+  generation: 3
+  creationTimestamp: '2026-01-26T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-26T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-shared-runner
+  sessionAffinity: None
+  clusterIP: 172.30.161.105
+  clusterIPs:
+  - 172.30.161.105
+status:
+  loadBalancer: {}

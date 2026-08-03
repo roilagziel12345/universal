@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'payments-svc-shared-runner' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over payments-svc-shared-runner-values.yaml.
+
+image:
+  repository: registry.example.com/payments-svc-shared-runner
+  tag: v3.2.0

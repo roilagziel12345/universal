@@ -1,0 +1,280 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-svc-edge-1
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-edge-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 017cc92a-c7f1-44d8-8bd2-ed4e724acade
+  resourceVersion: '7629864'
+  generation: 3
+  creationTimestamp: '2026-03-02T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-02T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: analytics-svc-edge-1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-edge-1
+        app.kubernetes.io/name: analytics-svc-edge-1
+    spec:
+      containers:
+      - name: analytics-svc-edge-1
+        image: registry.example.com/analytics-svc-edge-1:2.3.1
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-edge-1
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-edge-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 68381e7d-8117-4f1f-9732-5b6df42c39c3
+  resourceVersion: '8720919'
+  generation: 2
+  creationTimestamp: '2026-05-03T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-03T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-edge-1
+  sessionAffinity: None
+  clusterIP: 172.30.95.247
+  clusterIPs:
+  - 172.30.95.247
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-edge-1-admin
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-edge-1-admin
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b54cb6b0-97d9-41a1-9ed5-78a86b21eac3
+  resourceVersion: '4782726'
+  generation: 9
+  creationTimestamp: '2025-12-23T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-23T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8081
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-edge-1
+  sessionAffinity: None
+  clusterIP: 172.30.193.11
+  clusterIPs:
+  - 172.30.193.11
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: analytics-svc-edge-1
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-edge-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c91ee489-29a0-43b9-ad72-0397a65db0e7
+  resourceVersion: '2282154'
+  generation: 3
+  creationTimestamp: '2026-03-17T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-17T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: analytics-svc-edge-1
+    weight: 100
+  port:
+    targetPort: http
+  host: analytics-svc-edge-1.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: analytics-svc-edge-1.apps.example.com
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: analytics-svc-edge-1-admin-console
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-edge-1-admin-console
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 936cb39e-0a48-44f5-9102-f8837880695d
+  resourceVersion: '4378461'
+  generation: 1
+  creationTimestamp: '2025-10-04T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-04T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: analytics-svc-edge-1-admin
+    weight: 100
+  port:
+    targetPort: http
+  host: analytics-svc-edge-1-admin.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: analytics-svc-edge-1-admin.apps.example.com
+    routerName: default
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: analytics-svc-edge-1-allow-ingress
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-edge-1-allow-ingress
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b4c02da5-f195-4bfc-b55c-13a0cf0cb46a
+  resourceVersion: '7923741'
+  generation: 12
+  creationTimestamp: '2026-02-11T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-11T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: analytics-svc-edge-1
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: analytics-svc-edge-1-deny-egress-external
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-edge-1-deny-egress-external
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ff3d8a8a-4e38-419f-973f-87b085ce1e24
+  resourceVersion: '770091'
+  generation: 3
+  creationTimestamp: '2026-05-12T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-12T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: analytics-svc-edge-1
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP

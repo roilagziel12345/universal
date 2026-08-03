@@ -1,0 +1,261 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: analytics-svc-svc-03-backup
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-03-backup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 494394e5-2c45-4cf5-b46c-e71ba7833d97
+  resourceVersion: '7528425'
+  generation: 7
+  creationTimestamp: '2025-08-09T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-09T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: analytics-svc-svc-03-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: analytics-svc-svc-03-backup
+            image: registry.example.com/analytics-svc-svc-03-backup:latest
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            envFrom:
+            - secretRef:
+                name: analytics-svc-svc-03-db-secret
+            command:
+            - /bin/sh
+            - -c
+            - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: analytics-svc-svc-03-cleanup
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-03-cleanup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1593cde6-63fe-49c9-89a9-9eb5998edc98
+  resourceVersion: '4181447'
+  generation: 6
+  creationTimestamp: '2025-07-01T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-01T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: analytics-svc-svc-03-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: analytics-svc-svc-03-cleanup
+            image: registry.example.com/analytics-svc-svc-03-cleanup:v3.2.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            command:
+            - python
+            - manage.py
+            - clearsessions
+status: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: analytics-svc-svc-03-migrate
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-03-migrate
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fd558921-4feb-4c33-a8ef-4e1737fecd93
+  resourceVersion: '7829606'
+  generation: 10
+  creationTimestamp: '2025-08-16T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-16T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-svc-03-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: analytics-svc-svc-03-migrate
+        image: registry.example.com/analytics-svc-svc-03-migrate:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        command:
+        - python
+        - manage.py
+        - migrate
+status:
+  succeeded: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: analytics-svc-svc-03-backup-29384756
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-03-backup-29384756
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 634fddbf-2b04-4e91-a3af-dfc25f34923d
+  resourceVersion: '8186117'
+  generation: 2
+  creationTimestamp: '2026-07-16T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-16T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: batch/v1
+    kind: CronJob
+    name: analytics-svc-svc-03-backup
+    controller: true
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-svc-03-backup-29384756
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: analytics-svc-svc-03-backup
+        image: registry.example.com/analytics-svc-svc-03-backup:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: analytics-svc-svc-03-db-secret
+        command:
+        - /bin/sh
+        - -c
+        - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status:
+  succeeded: 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: analytics-svc-svc-03-backups
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-03-backups
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f84e22d9-10c3-4a24-8995-3fd752d77b7a
+  resourceVersion: '1233372'
+  generation: 7
+  creationTimestamp: '2026-03-20T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-20T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: analytics-svc-svc-03-db-secret
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-03-db-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 83ab5f10-eb06-416b-a807-7ca3b71d4cf6
+  resourceVersion: '3797401'
+  generation: 11
+  creationTimestamp: '2025-09-09T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-09T08:11:30Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAYW5hbHl0aWNzLXN2Yy1zdmMtMDMtZGI6NTQzMi9hcHA=

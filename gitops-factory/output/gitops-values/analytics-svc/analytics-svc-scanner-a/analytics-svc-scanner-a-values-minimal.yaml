@@ -1,0 +1,5 @@
+# Auto-generated MINIMAL override for 'analytics-svc-scanner-a' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over analytics-svc-scanner-a-values.yaml.
+
+{}

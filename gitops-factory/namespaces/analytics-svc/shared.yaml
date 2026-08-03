@@ -1,0 +1,229 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fe246854-8987-4e6d-918f-365a0bb36d5d
+  resourceVersion: '9978611'
+  generation: 2
+  creationTimestamp: '2026-07-07T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-07T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-defaults
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: logging-defaults
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d69ee3e3-330a-46f9-8baf-082ea3d736d2
+  resourceVersion: '7658212'
+  generation: 8
+  creationTimestamp: '2025-06-30T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-06-30T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  LOG_LEVEL: info
+  LOG_FORMAT: json
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-pull-creds
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: registry-pull-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5c01b66c-39f5-4fc7-b939-9b10f599a774
+  resourceVersion: '9987084'
+  generation: 9
+  creationTimestamp: '2025-08-27T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-27T08:11:30Z'
+    fieldsType: FieldsV1
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6e319
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shared-db-creds
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: shared-db-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 603acb79-7e09-418d-a2b4-2dd87918d4ed
+  resourceVersion: '8468955'
+  generation: 1
+  creationTimestamp: '2026-05-23T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-23T08:11:30Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly9zdmM6cGFzc0BhbmFseXRpY3Mtc3ZjLXNoYXJlZC1kYjo1NDMyL3BsYXRmb3Jt
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: namespace-deployer
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: namespace-deployer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a2dfa345-896d-4f28-bd53-73b673d4003d
+  resourceVersion: '914896'
+  generation: 9
+  creationTimestamp: '2025-11-01T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-01T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: namespace-deployer-token-a1b2c
+- name: namespace-deployer-dockercfg-x9z8y
+imagePullSecrets:
+- name: namespace-deployer-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-viewer
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 4ab4e36a-d5d8-4d90-a0d0-9a6a94dacf50
+  resourceVersion: '9916696'
+  generation: 8
+  creationTimestamp: '2025-12-21T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-21T08:11:30Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: namespace-viewer-binding
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer-binding
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 78959952-1caa-4b65-a089-61f8804ac3b8
+  resourceVersion: '3072963'
+  generation: 12
+  creationTimestamp: '2025-11-12T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-12T08:11:30Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: namespace-viewer
+subjects:
+- kind: ServiceAccount
+  name: namespace-deployer
+  namespace: analytics-svc
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: default-deny-all
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 930864e4-d311-4cdd-8df5-b95f4debafe2
+  resourceVersion: '3013368'
+  generation: 12
+  creationTimestamp: '2025-10-07T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-07T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1a982b64-f430-4c62-8449-1c46d251dea8
+  resourceVersion: '1837347'
+  generation: 7
+  creationTimestamp: '2026-05-26T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-26T08:11:30Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'

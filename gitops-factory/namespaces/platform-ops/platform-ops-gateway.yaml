@@ -1,0 +1,546 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-gateway-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: bc1e2529-b56c-4498-9783-4691623b0abf
+  resourceVersion: '7038755'
+  generation: 7
+  creationTimestamp: '2026-06-03T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-03T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-gateway-sa-token-a1b2c
+- name: platform-ops-gateway-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-gateway-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-gateway
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5b5a188b-fd71-4f8d-b69e-7ebc9632da33
+  resourceVersion: '3295887'
+  generation: 6
+  creationTimestamp: '2026-02-02T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-02T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-gateway
+        app.kubernetes.io/name: platform-ops-gateway
+    spec:
+      containers:
+      - name: platform-ops-gateway
+        image: registry.example.com/platform-ops-gateway:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_MODE
+          value: full
+        envFrom:
+        - secretRef:
+            name: platform-ops-gateway-secret
+        - configMapRef:
+            name: logging-defaults
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: cfg
+          mountPath: /etc/app
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: platform-ops-gateway-sa
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: platform-ops-gateway-data
+      - name: cfg
+        configMap:
+          name: platform-ops-gateway-config
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 6
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: platform-ops-gateway-2309186996
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-2309186996
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ec426f97-e04b-4903-be0e-a3fbb78de4b3
+  resourceVersion: '7519054'
+  generation: 10
+  creationTimestamp: '2026-02-01T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-01T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-gateway
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-ops-gateway
+  template:
+    metadata:
+      labels:
+        app: platform-ops-gateway
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-gateway
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 45d6a6ff-0d1a-4de2-9bfc-45d5ae51bd81
+  resourceVersion: '4017305'
+  generation: 4
+  creationTimestamp: '2026-07-08T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-08T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-gateway
+  sessionAffinity: None
+  clusterIP: 172.30.74.113
+  clusterIPs:
+  - 172.30.74.113
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-gateway-metrics
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-metrics
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c1ef04df-04f1-47c2-b5ca-fbfc58fb7917
+  resourceVersion: '1539727'
+  generation: 2
+  creationTimestamp: '2025-07-08T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-08T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 9090
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-gateway
+  sessionAffinity: None
+  clusterIP: 172.30.191.40
+  clusterIPs:
+  - 172.30.191.40
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: platform-ops-gateway
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 0a88fd39-6b63-4e43-ac0c-60e28283a7ae
+  resourceVersion: '1014996'
+  generation: 4
+  creationTimestamp: '2025-07-17T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-17T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: platform-ops-gateway
+    weight: 100
+  port:
+    targetPort: http
+  host: platform-ops-gateway.apps.cluster-generated.local
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: platform-ops-gateway.apps.cluster-generated.local
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: platform-ops-gateway-alt
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-alt
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c24d7fb2-8bca-4feb-a283-e6105e917974
+  resourceVersion: '2577610'
+  generation: 5
+  creationTimestamp: '2025-09-16T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-16T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: platform-ops-gateway-metrics
+    weight: 100
+  port:
+    targetPort: http
+  host: platform-ops-gateway-metrics.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: platform-ops-gateway-metrics.apps.example.com
+    routerName: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-ops-gateway-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 69d99a32-93a7-45ab-beab-86dcc7dc551c
+  resourceVersion: '5859137'
+  generation: 12
+  creationTimestamp: '2026-07-23T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-23T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_ALL: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-gateway-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 34ec35cb-bd08-4bfc-8d58-be4c34e7a3f7
+  resourceVersion: '5219031'
+  generation: 8
+  creationTimestamp: '2026-06-04T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-04T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  TOKEN: ZTk0ODY4MjQ2MGQwNDQ3NmJhMDI0NzEwYjgwMzhkMTY=
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: platform-ops-gateway-data
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-data
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f22cf752-ddc7-472d-9f9c-3a980d860fe5
+  resourceVersion: '481650'
+  generation: 6
+  creationTimestamp: '2025-12-01T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-01T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 30Gi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: platform-ops-gateway
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: eed0422f-5c77-479b-a9c0-220998808854
+  resourceVersion: '9126233'
+  generation: 4
+  creationTimestamp: '2026-04-14T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-14T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-gateway
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-ops-gateway
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b83d5db3-233c-46d7-9caf-1da1b406496d
+  resourceVersion: '9267477'
+  generation: 9
+  creationTimestamp: '2026-04-17T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-17T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  selector:
+    matchLabels:
+      app: platform-ops-gateway
+  minAvailable: 1
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-ops-gateway-net
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-net
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3ff44f3a-b82b-4fce-8964-75eacef472e7
+  resourceVersion: '4439561'
+  generation: 9
+  creationTimestamp: '2025-07-11T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-11T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: platform-ops-gateway
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-ops-gateway-role
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f324d821-e27c-499b-9adc-0c7e0aba4314
+  resourceVersion: '2471416'
+  generation: 12
+  creationTimestamp: '2025-11-25T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-25T08:11:34Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-ops-gateway-rb
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-gateway-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 97ec03fd-1461-42c6-8588-e7db0be87655
+  resourceVersion: '408508'
+  generation: 7
+  creationTimestamp: '2025-08-07T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-07T08:11:34Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: platform-ops-gateway-role
+subjects:
+- kind: ServiceAccount
+  name: platform-ops-gateway-sa
+  namespace: platform-ops
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d01eff2c-9ca5-4f5c-bc0b-1115a9d760f5
+  resourceVersion: '1527388'
+  generation: 7
+  creationTimestamp: '2026-03-18T08:11:33Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-18T08:11:33Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '

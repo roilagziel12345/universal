@@ -1,0 +1,284 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logistics-svc-checkout-sa
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-checkout-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e33126e2-8517-40dd-896b-5dc59ad1724b
+  resourceVersion: '6542986'
+  generation: 6
+  creationTimestamp: '2025-10-02T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-02T08:11:26Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: logistics-svc-checkout-sa-token-a1b2c
+- name: logistics-svc-checkout-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: logistics-svc-checkout-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-svc-checkout
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-checkout
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b6347d26-f34d-4cac-bec8-f46cedefe03f
+  resourceVersion: '4746746'
+  generation: 11
+  creationTimestamp: '2026-03-26T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-26T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: logistics-svc-checkout
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-checkout
+        app.kubernetes.io/name: logistics-svc-checkout
+    spec:
+      containers:
+      - name: logistics-svc-checkout
+        image: registry.example.com/logistics-svc-checkout:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: logistics-svc-checkout-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: logistics-svc-checkout-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 2
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: logistics-svc-checkout-9056616444
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-checkout-9056616444
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e314f320-8769-4d8a-80d7-f7274224d063
+  resourceVersion: '8786388'
+  generation: 10
+  creationTimestamp: '2026-04-16T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-16T08:11:26Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: logistics-svc-checkout
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-svc-checkout
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-checkout
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logistics-svc-checkout-76784-gpxyz
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-checkout-76784-gpxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 97ebb6bd-7840-4ee1-9b26-3bb9ba117d0b
+  resourceVersion: '1015518'
+  generation: 4
+  creationTimestamp: '2026-03-01T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-01T08:11:26Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: logistics-svc-checkout-rs
+    controller: true
+spec:
+  containers:
+  - name: logistics-svc-checkout
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-checkout
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-checkout
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: cd4664f5-f1ec-40d7-8310-dc549dac6fef
+  resourceVersion: '4144680'
+  generation: 8
+  creationTimestamp: '2026-06-03T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-03T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-checkout
+  sessionAffinity: None
+  clusterIP: 172.30.253.99
+  clusterIPs:
+  - 172.30.253.99
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logistics-svc-checkout-config
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-checkout-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c182fcf9-bc76-4efc-b5f0-ad9518ecab1a
+  resourceVersion: '302450'
+  generation: 6
+  creationTimestamp: '2025-11-02T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-02T08:11:26Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '200'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logistics-svc-checkout-secret
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-checkout-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: da007e8f-c364-45a7-8463-936f3047d920
+  resourceVersion: '2314305'
+  generation: 7
+  creationTimestamp: '2026-02-18T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-18T08:11:26Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: MGY1NDdhYTk1NGM5NDE4YWFiZTM2YzI3NzNkY2E1ZDE=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: app-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7f280143-6772-4fc8-bb36-ce98e6a8c46b
+  resourceVersion: '2998604'
+  generation: 8
+  creationTimestamp: '2025-08-15T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-15T08:11:26Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_X: 'on'

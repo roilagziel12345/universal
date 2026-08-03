@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker-sa
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: worker-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 68a0b49b-d5da-4367-b9b9-721edb35f7cd
+  resourceVersion: '188762'
+  generation: 2
+  creationTimestamp: '2026-01-12T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-12T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: worker-sa-token-a1b2c
+- name: worker-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: worker-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: analytics-svc-worker-b-role
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-worker-b-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 16fd0f18-0b7e-4e0e-a3af-f72ff319ebff
+  resourceVersion: '8013286'
+  generation: 10
+  creationTimestamp: '2026-05-17T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-17T08:11:30Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: analytics-svc-worker-b-rb
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-worker-b-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e3775203-1f3b-44b5-88c9-7320c572ef68
+  resourceVersion: '1578755'
+  generation: 2
+  creationTimestamp: '2025-12-20T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-20T08:11:30Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: analytics-svc-worker-b-role
+subjects:
+- kind: ServiceAccount
+  name: worker-sa
+  namespace: analytics-svc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-svc-worker-b
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-worker-b
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f4d4b070-03fe-4c71-95d0-d597b4af21f0
+  resourceVersion: '6321581'
+  generation: 2
+  creationTimestamp: '2026-04-08T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-08T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: analytics-svc-worker-b
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-worker-b
+        app.kubernetes.io/name: analytics-svc-worker-b
+    spec:
+      containers:
+      - name: analytics-svc-worker-b
+        image: registry.example.com/analytics-svc-worker-b:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: worker-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-worker-b
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-worker-b
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7357b7b4-ea24-4b71-ac59-c3820cfc9375
+  resourceVersion: '6821705'
+  generation: 10
+  creationTimestamp: '2026-01-15T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-15T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-worker-b
+  sessionAffinity: None
+  clusterIP: 172.30.19.186
+  clusterIPs:
+  - 172.30.19.186
+status:
+  loadBalancer: {}

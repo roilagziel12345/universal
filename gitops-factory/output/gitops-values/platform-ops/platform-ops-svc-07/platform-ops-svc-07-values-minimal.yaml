@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'platform-ops-svc-07' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over platform-ops-svc-07-values.yaml.
+
+image:
+  repository: registry.example.com/platform-ops-svc-07
+  tag: 1.0.0

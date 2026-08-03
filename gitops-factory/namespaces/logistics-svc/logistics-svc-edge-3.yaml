@@ -1,0 +1,280 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-svc-edge-3
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-edge-3
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9cfd8ccf-64c9-414d-838b-e2e42b6b81da
+  resourceVersion: '3571922'
+  generation: 1
+  creationTimestamp: '2026-04-16T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-16T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: logistics-svc-edge-3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-edge-3
+        app.kubernetes.io/name: logistics-svc-edge-3
+    spec:
+      containers:
+      - name: logistics-svc-edge-3
+        image: registry.example.com/logistics-svc-edge-3:2.3.1
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-edge-3
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-edge-3
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e5df620a-db30-4a71-b4b1-63000f437e4d
+  resourceVersion: '9139036'
+  generation: 3
+  creationTimestamp: '2026-03-09T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-09T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-edge-3
+  sessionAffinity: None
+  clusterIP: 172.30.179.137
+  clusterIPs:
+  - 172.30.179.137
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-edge-3-admin
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-edge-3-admin
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a8c8ef67-6c92-433c-8bf4-eb525e7fcdd0
+  resourceVersion: '5009595'
+  generation: 5
+  creationTimestamp: '2025-08-04T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-04T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8081
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-edge-3
+  sessionAffinity: None
+  clusterIP: 172.30.165.251
+  clusterIPs:
+  - 172.30.165.251
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: logistics-svc-edge-3
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-edge-3
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 95e3ed70-9890-499b-a449-e2524eadd162
+  resourceVersion: '4585272'
+  generation: 9
+  creationTimestamp: '2025-10-10T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-10T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: logistics-svc-edge-3
+    weight: 100
+  port:
+    targetPort: http
+  host: logistics-svc-edge-3.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: logistics-svc-edge-3.apps.example.com
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: logistics-svc-edge-3-admin-console
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-edge-3-admin-console
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9460752b-69c9-45f9-aa59-a0d3e1cf1f7e
+  resourceVersion: '1697613'
+  generation: 3
+  creationTimestamp: '2025-08-17T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-17T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: logistics-svc-edge-3-admin
+    weight: 100
+  port:
+    targetPort: http
+  host: logistics-svc-edge-3-admin.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: logistics-svc-edge-3-admin.apps.example.com
+    routerName: default
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: logistics-svc-edge-3-allow-ingress
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-edge-3-allow-ingress
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9db60e8c-ba91-4e37-b69e-76278ae1316b
+  resourceVersion: '7005438'
+  generation: 1
+  creationTimestamp: '2025-07-11T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-11T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: logistics-svc-edge-3
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: logistics-svc-edge-3-deny-egress-external
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-edge-3-deny-egress-external
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6ede2a2d-288b-4933-9eb6-239944f6ea56
+  resourceVersion: '2228830'
+  generation: 12
+  creationTimestamp: '2026-03-11T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-11T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: logistics-svc-edge-3
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP

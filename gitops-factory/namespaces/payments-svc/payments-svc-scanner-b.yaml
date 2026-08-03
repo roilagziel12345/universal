@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-svc-scanner-b-sa
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-scanner-b-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7a8e7284-df28-4f77-8296-ef42dd3bfd15
+  resourceVersion: '2663646'
+  generation: 12
+  creationTimestamp: '2025-08-09T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-09T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: payments-svc-scanner-b-sa-token-a1b2c
+- name: payments-svc-scanner-b-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: payments-svc-scanner-b-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: audit-role
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: audit-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d9d8373f-8970-401f-b895-b40860ef61cd
+  resourceVersion: '1177581'
+  generation: 7
+  creationTimestamp: '2026-04-12T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-12T08:11:16Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: payments-svc-scanner-b-audit-rb
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-scanner-b-audit-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 577c4a57-0b99-4a0f-8ab6-b376d86de79b
+  resourceVersion: '5651268'
+  generation: 9
+  creationTimestamp: '2026-01-03T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-03T08:11:16Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: audit-role
+subjects:
+- kind: ServiceAccount
+  name: payments-svc-scanner-b-sa
+  namespace: payments-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-svc-scanner-b-audit-settings
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-scanner-b-audit-settings
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 98f6bab9-a3ed-43ec-80e9-765912a7a29a
+  resourceVersion: '7075534'
+  generation: 1
+  creationTimestamp: '2025-12-04T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-04T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  AUDIT_ENABLED: 'true'

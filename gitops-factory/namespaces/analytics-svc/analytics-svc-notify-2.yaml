@@ -1,0 +1,290 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-notify-2-sa
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-notify-2-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 82fee788-01d8-429b-81af-2a4e94f18451
+  resourceVersion: '8190660'
+  generation: 11
+  creationTimestamp: '2026-06-13T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-13T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: analytics-svc-notify-2-sa-token-a1b2c
+- name: analytics-svc-notify-2-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: analytics-svc-notify-2-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-svc-notify-2
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-notify-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fffd5084-c110-4bfa-92ad-07d16992ece2
+  resourceVersion: '7339315'
+  generation: 9
+  creationTimestamp: '2025-09-01T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-01T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: analytics-svc-notify-2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-notify-2
+        app.kubernetes.io/name: analytics-svc-notify-2
+    spec:
+      containers:
+      - name: analytics-svc-notify-2
+        image: registry.example.com/analytics-svc-notify-2:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: analytics-svc-notify-2-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: analytics-svc-notify-2-sa
+status:
+  replicas: 3
+  readyReplicas: 3
+  availableReplicas: 3
+  observedGeneration: 7
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: analytics-svc-notify-2-9776500600
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-notify-2-9776500600
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8ccab973-dfd3-49b9-852d-93b45d8aecde
+  resourceVersion: '7296691'
+  generation: 4
+  creationTimestamp: '2025-11-01T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-01T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-svc-notify-2
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-svc-notify-2
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-notify-2
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: analytics-svc-notify-2-73192-pnxyz
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-notify-2-73192-pnxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 021c5c04-6734-4ab7-ada3-2ed384130629
+  resourceVersion: '9765703'
+  generation: 2
+  creationTimestamp: '2025-10-02T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-02T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: analytics-svc-notify-2-rs
+    controller: true
+spec:
+  containers:
+  - name: analytics-svc-notify-2
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-notify-2
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-notify-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8e1da67c-54b9-4ff1-8818-9a8d804d5b36
+  resourceVersion: '8105101'
+  generation: 4
+  creationTimestamp: '2026-03-22T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-22T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-notify-2
+  sessionAffinity: None
+  clusterIP: 172.30.217.35
+  clusterIPs:
+  - 172.30.217.35
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-svc-notify-2-config
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-notify-2-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 873bc9e1-30ac-4ed2-8cf5-0868bef9b710
+  resourceVersion: '9222292'
+  generation: 7
+  creationTimestamp: '2025-09-27T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-27T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '50'
+  FEATURE_FLAG_BETA: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: analytics-svc-notify-2-secret
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-notify-2-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 0da1feb5-5251-4099-8528-7eb1bbae3f2f
+  resourceVersion: '3271246'
+  generation: 1
+  creationTimestamp: '2026-03-21T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-21T08:11:30Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: OWFhODJlY2ZjNjkwNGFkM2EyMTJjM2IzYmNhMDY5MWE=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fe246854-8987-4e6d-918f-365a0bb36d5d
+  resourceVersion: '9978611'
+  generation: 2
+  creationTimestamp: '2026-07-07T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-07T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '

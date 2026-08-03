@@ -1,0 +1,324 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-notify-1-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 61d0211d-99ae-4053-b882-7a900e57f8d4
+  resourceVersion: '2060327'
+  generation: 5
+  creationTimestamp: '2026-04-26T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-26T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-notify-1-sa-token-a1b2c
+- name: platform-ops-notify-1-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-notify-1-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-notify-1
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6458abbd-077f-4ff2-a84b-62c78bfc8fbc
+  resourceVersion: '1556225'
+  generation: 8
+  creationTimestamp: '2025-12-31T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-31T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-notify-1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-notify-1
+        app.kubernetes.io/name: platform-ops-notify-1
+    spec:
+      containers:
+      - name: platform-ops-notify-1
+        image: registry.example.com/platform-ops-notify-1:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 9000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: platform-ops-notify-1-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: platform-ops-notify-1-sa
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 4
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: platform-ops-notify-1-6890906602
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1-6890906602
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 63192826-612e-4868-9319-c87d6a006927
+  resourceVersion: '3726225'
+  generation: 9
+  creationTimestamp: '2026-02-26T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-26T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-notify-1
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-ops-notify-1
+  template:
+    metadata:
+      labels:
+        app: platform-ops-notify-1
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: platform-ops-notify-1-49625-fdxyz
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1-49625-fdxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: cb0f7e14-a973-4621-9ed6-bb61d63a74df
+  resourceVersion: '727384'
+  generation: 4
+  creationTimestamp: '2026-01-20T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-20T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: platform-ops-notify-1-rs
+    controller: true
+spec:
+  containers:
+  - name: platform-ops-notify-1
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-notify-1
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b9732b42-38f1-42e4-9543-379a1b5e4ba8
+  resourceVersion: '518336'
+  generation: 8
+  creationTimestamp: '2025-11-13T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-13T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-notify-1
+  sessionAffinity: None
+  clusterIP: 172.30.47.114
+  clusterIPs:
+  - 172.30.47.114
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-ops-notify-1-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7fc3f959-2d9b-4d59-b204-4cb9a7f5bde3
+  resourceVersion: '5806197'
+  generation: 8
+  creationTimestamp: '2026-04-24T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-24T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '200'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-notify-1-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6a4ef63f-a4be-47be-ac1d-c76114fec213
+  resourceVersion: '8885019'
+  generation: 5
+  creationTimestamp: '2025-07-20T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-20T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: MjczMWMyOTUwMTFlNGY2MWJhYTkyNTY1NzM5N2Y2NDY=
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: platform-ops-notify-1
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-notify-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 0326bd46-d95a-41f1-a2fe-3b270ab79bd0
+  resourceVersion: '8759503'
+  generation: 11
+  creationTimestamp: '2026-06-10T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-10T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-notify-1
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d01eff2c-9ca5-4f5c-bc0b-1115a9d760f5
+  resourceVersion: '1527388'
+  generation: 7
+  creationTimestamp: '2026-03-18T08:11:33Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-18T08:11:33Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '

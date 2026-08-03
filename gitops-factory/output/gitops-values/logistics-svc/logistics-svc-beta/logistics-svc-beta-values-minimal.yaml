@@ -1,0 +1,10 @@
+# Auto-generated MINIMAL override for 'logistics-svc-beta' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over logistics-svc-beta-values.yaml.
+
+env:
+  APP_ENV:
+    value: production
+image:
+  repository: registry.example.com/logistics-svc-beta
+  tag: 1.0.0

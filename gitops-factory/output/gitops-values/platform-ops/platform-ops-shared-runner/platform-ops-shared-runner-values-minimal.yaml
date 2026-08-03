@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'platform-ops-shared-runner' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over platform-ops-shared-runner-values.yaml.
+
+image:
+  repository: registry.example.com/platform-ops-shared-runner
+  tag: latest

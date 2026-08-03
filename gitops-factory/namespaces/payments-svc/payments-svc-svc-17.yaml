@@ -1,0 +1,332 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-svc-svc-17-sa
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 726ab20f-b799-46bb-9e9e-2ad32279db6c
+  resourceVersion: '5053150'
+  generation: 1
+  creationTimestamp: '2025-08-06T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-06T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: payments-svc-svc-17-sa-token-a1b2c
+- name: payments-svc-svc-17-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: payments-svc-svc-17-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-svc-svc-17
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d9039504-0e19-45fe-8a24-fa4eee519e9a
+  resourceVersion: '922825'
+  generation: 10
+  creationTimestamp: '2025-10-14T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-14T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: payments-svc-svc-17
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: payments-svc-svc-17
+        app.kubernetes.io/name: payments-svc-svc-17
+    spec:
+      containers:
+      - name: payments-svc-svc-17
+        image: registry.example.com/payments-svc-svc-17:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: payments-svc-svc-17-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: payments-svc-svc-17-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 8
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: payments-svc-svc-17-9173043235
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17-9173043235
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: cadcb40d-cd69-41cc-ab62-02b20f97c5c1
+  resourceVersion: '3960745'
+  generation: 10
+  creationTimestamp: '2025-06-28T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-06-28T08:11:16Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: payments-svc-svc-17
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-svc-svc-17
+  template:
+    metadata:
+      labels:
+        app: payments-svc-svc-17
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payments-svc-svc-17-56179-hgxyz
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17-56179-hgxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 74769b82-f290-4766-ad7c-69fceb9e0442
+  resourceVersion: '4304819'
+  generation: 11
+  creationTimestamp: '2025-09-16T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-16T08:11:16Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: payments-svc-svc-17-rs
+    controller: true
+spec:
+  containers:
+  - name: payments-svc-svc-17
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-svc-svc-17
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a0d71664-1e30-44cb-a3c3-51ae4aaded35
+  resourceVersion: '761401'
+  generation: 5
+  creationTimestamp: '2026-06-11T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-11T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: payments-svc-svc-17
+  sessionAffinity: None
+  clusterIP: 172.30.70.161
+  clusterIPs:
+  - 172.30.70.161
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-svc-svc-17-config
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1b1c7fb1-0b6b-4e1d-95c7-5ad26f4b5225
+  resourceVersion: '6221355'
+  generation: 12
+  creationTimestamp: '2025-10-07T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-07T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '100'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: payments-svc-svc-17-secret
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d9994334-4836-4d48-90d4-66254f15af08
+  resourceVersion: '1612187'
+  generation: 5
+  creationTimestamp: '2026-05-24T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-24T08:11:16Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: YTg3NDY5ODRmMjg2NDgwMDg1ZjE0MzQ3M2QzOGUzM2I=
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: payments-svc-svc-17
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2fcf4fc9-edc6-4e2b-b175-d3e18f89cfb3
+  resourceVersion: '3046751'
+  generation: 4
+  creationTimestamp: '2025-12-30T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-30T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: payments-svc-svc-17
+    weight: 100
+  port:
+    targetPort: http
+  host: payments-svc-svc-17.apps.cluster-generated.local
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: payments-svc-svc-17.apps.cluster-generated.local
+    routerName: default
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: payments-svc-svc-17
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-17
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 68ef13e8-6e66-4b2a-8683-8ee32ce10768
+  resourceVersion: '6238070'
+  generation: 9
+  creationTimestamp: '2025-10-27T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-27T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: payments-svc-svc-17
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

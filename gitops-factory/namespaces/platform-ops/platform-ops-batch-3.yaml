@@ -1,0 +1,371 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: platform-ops-batch-3-backup
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3-backup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 647e8b4c-2139-404d-9610-1824f9c1be5c
+  resourceVersion: '9695467'
+  generation: 10
+  creationTimestamp: '2026-01-10T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-10T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: platform-ops-batch-3-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: platform-ops-batch-3-backup
+            image: registry.example.com/platform-ops-batch-3-backup:latest
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            envFrom:
+            - secretRef:
+                name: platform-ops-batch-3-db-secret
+            command:
+            - /bin/sh
+            - -c
+            - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: platform-ops-batch-3-cleanup
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3-cleanup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d2eca752-85d7-46c1-b236-32f9b5fb6152
+  resourceVersion: '1934023'
+  generation: 8
+  creationTimestamp: '2025-11-06T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-06T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: platform-ops-batch-3-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: platform-ops-batch-3-cleanup
+            image: registry.example.com/platform-ops-batch-3-cleanup:1.0.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            command:
+            - python
+            - manage.py
+            - clearsessions
+status: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: platform-ops-batch-3-migrate
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3-migrate
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: bccf26a4-0c0a-4631-816e-cce14fc5b8a0
+  resourceVersion: '4222525'
+  generation: 9
+  creationTimestamp: '2026-07-09T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-09T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: platform-ops-batch-3-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: platform-ops-batch-3-migrate
+        image: registry.example.com/platform-ops-batch-3-migrate:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        command:
+        - python
+        - manage.py
+        - migrate
+status:
+  succeeded: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: platform-ops-batch-3-backup-29384756
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3-backup-29384756
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b2db2614-1369-4856-a499-dfdbfcd63555
+  resourceVersion: '6737254'
+  generation: 12
+  creationTimestamp: '2025-10-28T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-28T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: batch/v1
+    kind: CronJob
+    name: platform-ops-batch-3-backup
+    controller: true
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: platform-ops-batch-3-backup-29384756
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: platform-ops-batch-3-backup
+        image: registry.example.com/platform-ops-batch-3-backup:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: platform-ops-batch-3-db-secret
+        command:
+        - /bin/sh
+        - -c
+        - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status:
+  succeeded: 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: platform-ops-batch-3-backups
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3-backups
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 36561369-09d8-45cb-9f67-52d2c879365c
+  resourceVersion: '9456669'
+  generation: 7
+  creationTimestamp: '2026-07-10T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-10T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-batch-3-db-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3-db-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 255e29ef-6cbb-4d8d-b60a-4506b5dce4a6
+  resourceVersion: '927040'
+  generation: 4
+  creationTimestamp: '2025-11-08T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-08T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAcGxhdGZvcm0tb3BzLWJhdGNoLTMtZGI6NTQzMi9hcHA=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-batch-3
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ef4e870f-9882-478e-96e5-015497598050
+  resourceVersion: '6778001'
+  generation: 5
+  creationTimestamp: '2025-12-17T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-17T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-batch-3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-batch-3
+        app.kubernetes.io/name: platform-ops-batch-3
+    spec:
+      containers:
+      - name: platform-ops-batch-3
+        image: registry.example.com/platform-ops-batch-3:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-batch-3
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-batch-3
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7b367af0-150c-4d00-a355-1c40a781ffcd
+  resourceVersion: '5039543'
+  generation: 10
+  creationTimestamp: '2025-12-26T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-26T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-batch-3
+  sessionAffinity: None
+  clusterIP: 172.30.236.43
+  clusterIPs:
+  - 172.30.236.43
+status:
+  loadBalancer: {}

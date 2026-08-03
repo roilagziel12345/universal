@@ -1,0 +1,5 @@
+# Auto-generated MINIMAL override for 'analytics-svc-batch-1' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over analytics-svc-batch-1-values.yaml.
+
+{}

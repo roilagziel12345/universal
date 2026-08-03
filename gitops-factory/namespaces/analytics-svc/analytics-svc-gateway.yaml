@@ -1,0 +1,546 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-gateway-sa
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 4b2b53ae-2b6f-483d-a971-9df3a8cfe13f
+  resourceVersion: '5499642'
+  generation: 9
+  creationTimestamp: '2025-08-28T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-28T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: analytics-svc-gateway-sa-token-a1b2c
+- name: analytics-svc-gateway-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: analytics-svc-gateway-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-svc-gateway
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 02777fc4-418d-41d2-8fe6-c39234f3eada
+  resourceVersion: '4264755'
+  generation: 5
+  creationTimestamp: '2025-12-28T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-28T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: analytics-svc-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-gateway
+        app.kubernetes.io/name: analytics-svc-gateway
+    spec:
+      containers:
+      - name: analytics-svc-gateway
+        image: registry.example.com/analytics-svc-gateway:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_MODE
+          value: full
+        envFrom:
+        - secretRef:
+            name: analytics-svc-gateway-secret
+        - configMapRef:
+            name: logging-defaults
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: cfg
+          mountPath: /etc/app
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: analytics-svc-gateway-sa
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: analytics-svc-gateway-data
+      - name: cfg
+        configMap:
+          name: analytics-svc-gateway-config
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 7
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: analytics-svc-gateway-9433570024
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-9433570024
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 478fa345-6fc5-4bb4-8952-7ddb9f7fd306
+  resourceVersion: '7697490'
+  generation: 3
+  creationTimestamp: '2026-03-02T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-02T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-svc-gateway
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-svc-gateway
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-gateway
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-gateway
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6d8e57d1-b8d3-443a-a72b-d5fa58e8d61f
+  resourceVersion: '8694877'
+  generation: 5
+  creationTimestamp: '2025-09-25T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-25T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-gateway
+  sessionAffinity: None
+  clusterIP: 172.30.70.106
+  clusterIPs:
+  - 172.30.70.106
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-gateway-metrics
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-metrics
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3b75f751-d191-4411-bad6-e0d0c64ca630
+  resourceVersion: '9387557'
+  generation: 11
+  creationTimestamp: '2025-07-18T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-18T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 9090
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-gateway
+  sessionAffinity: None
+  clusterIP: 172.30.160.183
+  clusterIPs:
+  - 172.30.160.183
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: analytics-svc-gateway
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: dfa53d64-a776-4d9c-9fdd-583254d623b0
+  resourceVersion: '3470359'
+  generation: 4
+  creationTimestamp: '2026-04-10T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-10T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: analytics-svc-gateway
+    weight: 100
+  port:
+    targetPort: http
+  host: analytics-svc-gateway.apps.cluster-generated.local
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: analytics-svc-gateway.apps.cluster-generated.local
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: analytics-svc-gateway-alt
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-alt
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: aa9a64f2-59f5-433c-99d2-9b5a7a00d115
+  resourceVersion: '4975114'
+  generation: 11
+  creationTimestamp: '2025-09-14T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-14T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: analytics-svc-gateway-metrics
+    weight: 100
+  port:
+    targetPort: http
+  host: analytics-svc-gateway-metrics.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: analytics-svc-gateway-metrics.apps.example.com
+    routerName: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-svc-gateway-config
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ead490f7-51b0-4cc4-b38e-46bbd4e42f4d
+  resourceVersion: '2325862'
+  generation: 12
+  creationTimestamp: '2026-02-04T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-04T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_ALL: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: analytics-svc-gateway-secret
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b8c08951-5051-4fb2-9a37-414b587eaf58
+  resourceVersion: '3083202'
+  generation: 9
+  creationTimestamp: '2025-09-01T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-01T08:11:30Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  TOKEN: ZjNmY2RiMGE1NzViNDIwZDlmZWIyZTg0NTMwMzE1YjI=
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: analytics-svc-gateway-data
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-data
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 413aa7cb-58f4-41d4-a2c7-47c1434b1864
+  resourceVersion: '5508662'
+  generation: 12
+  creationTimestamp: '2025-10-26T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-26T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 30Gi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: analytics-svc-gateway
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2f65778f-684f-4e39-883e-6173e8715997
+  resourceVersion: '6009569'
+  generation: 9
+  creationTimestamp: '2026-06-01T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-01T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-svc-gateway
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-svc-gateway
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5ff4fa70-b03f-4857-871e-eb88751c8acd
+  resourceVersion: '9877866'
+  generation: 10
+  creationTimestamp: '2025-11-27T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-27T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  selector:
+    matchLabels:
+      app: analytics-svc-gateway
+  minAvailable: 1
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: analytics-svc-gateway-net
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-net
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 326d028a-3e03-4796-b0fc-e2ea2f875876
+  resourceVersion: '7104117'
+  generation: 11
+  creationTimestamp: '2025-08-23T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-23T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: analytics-svc-gateway
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: analytics-svc-gateway-role
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9ec01251-ff34-4fb9-9831-0bae0e74d6f5
+  resourceVersion: '9057402'
+  generation: 5
+  creationTimestamp: '2025-07-13T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-13T08:11:30Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: analytics-svc-gateway-rb
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-gateway-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8ec99dbe-665d-4800-b422-d322730e778c
+  resourceVersion: '314253'
+  generation: 9
+  creationTimestamp: '2025-12-26T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-26T08:11:30Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: analytics-svc-gateway-role
+subjects:
+- kind: ServiceAccount
+  name: analytics-svc-gateway-sa
+  namespace: analytics-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fe246854-8987-4e6d-918f-365a0bb36d5d
+  resourceVersion: '9978611'
+  generation: 2
+  creationTimestamp: '2026-07-07T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-07T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '

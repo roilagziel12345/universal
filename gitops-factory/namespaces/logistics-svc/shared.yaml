@@ -1,0 +1,269 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 22d5145d-c52f-45e6-aab4-afe859655d5f
+  resourceVersion: '6376684'
+  generation: 7
+  creationTimestamp: '2025-12-14T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-14T08:11:26Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-defaults
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logging-defaults
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b20f714d-d724-4419-acb3-02ffffe4ce58
+  resourceVersion: '9974900'
+  generation: 12
+  creationTimestamp: '2025-12-05T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-05T08:11:26Z'
+    fieldsType: FieldsV1
+data:
+  LOG_LEVEL: info
+  LOG_FORMAT: json
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-pull-creds
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: registry-pull-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c7041ffc-cca8-4f64-ace5-84c345c48af0
+  resourceVersion: '2629080'
+  generation: 6
+  creationTimestamp: '2025-11-16T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-16T08:11:26Z'
+    fieldsType: FieldsV1
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6e319
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shared-db-creds
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: shared-db-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e7e911ea-41e6-4bd6-bdcb-74b9ad1a3632
+  resourceVersion: '8199554'
+  generation: 2
+  creationTimestamp: '2026-07-18T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-18T08:11:26Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly9zdmM6cGFzc0Bsb2dpc3RpY3Mtc3ZjLXNoYXJlZC1kYjo1NDMyL3BsYXRmb3Jt
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: namespace-deployer
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: namespace-deployer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 837e76a3-6461-4493-8cca-ce80b3607328
+  resourceVersion: '7078909'
+  generation: 2
+  creationTimestamp: '2026-03-01T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-01T08:11:26Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: namespace-deployer-token-a1b2c
+- name: namespace-deployer-dockercfg-x9z8y
+imagePullSecrets:
+- name: namespace-deployer-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-viewer
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d1bd398f-c821-48da-bbea-c2f54d0228f2
+  resourceVersion: '2476915'
+  generation: 6
+  creationTimestamp: '2026-06-01T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-01T08:11:26Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: namespace-viewer-binding
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer-binding
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f999ab76-93de-479e-8b97-af2110748f3f
+  resourceVersion: '5855703'
+  generation: 8
+  creationTimestamp: '2026-02-21T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-21T08:11:26Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: namespace-viewer
+subjects:
+- kind: ServiceAccount
+  name: namespace-deployer
+  namespace: logistics-svc
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: default-deny-all
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 0bfd22cb-3cb5-4dcf-bd60-5271e1d277c5
+  resourceVersion: '8842856'
+  generation: 8
+  creationTimestamp: '2026-04-16T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-16T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 0ebb0879-bbe1-4eb1-b69f-78a40d54041f
+  resourceVersion: '8088681'
+  generation: 2
+  creationTimestamp: '2026-02-02T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-02T08:11:26Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: restricted-custom-scc
+  labels:
+    app.kubernetes.io/name: restricted-custom-scc
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 80e182cb-8cb7-473d-8c83-bb4893ac515e
+  resourceVersion: '7690804'
+  generation: 6
+  creationTimestamp: '2025-12-18T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-18T08:11:26Z'
+    fieldsType: FieldsV1
+allowPrivilegedContainer: false
+allowPrivilegeEscalation: false
+requiredDropCapabilities:
+- ALL
+runAsUser:
+  type: MustRunAsRange
+seLinuxContext:
+  type: MustRunAs
+fsGroup:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+users:
+- system:serviceaccount:platform-shared:scc-user

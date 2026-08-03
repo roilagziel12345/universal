@@ -1,0 +1,261 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: payments-svc-batch-1-backup
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-batch-1-backup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f73185c5-d359-46aa-823a-d1940b7bf864
+  resourceVersion: '3794634'
+  generation: 1
+  creationTimestamp: '2025-10-02T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-02T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: payments-svc-batch-1-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: payments-svc-batch-1-backup
+            image: registry.example.com/payments-svc-batch-1-backup:2.3.1
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            envFrom:
+            - secretRef:
+                name: payments-svc-batch-1-db-secret
+            command:
+            - /bin/sh
+            - -c
+            - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: payments-svc-batch-1-cleanup
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-batch-1-cleanup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 047b4e99-1f86-4cb2-a8d3-f56ad3c313e3
+  resourceVersion: '1087737'
+  generation: 4
+  creationTimestamp: '2025-08-02T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-02T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: payments-svc-batch-1-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: payments-svc-batch-1-cleanup
+            image: registry.example.com/payments-svc-batch-1-cleanup:1.0.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            command:
+            - python
+            - manage.py
+            - clearsessions
+status: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: payments-svc-batch-1-migrate
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-batch-1-migrate
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8be6fa15-4424-4de1-b900-4f9e52244f8e
+  resourceVersion: '5643670'
+  generation: 2
+  creationTimestamp: '2026-07-14T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-14T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: payments-svc-batch-1-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: payments-svc-batch-1-migrate
+        image: registry.example.com/payments-svc-batch-1-migrate:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        command:
+        - python
+        - manage.py
+        - migrate
+status:
+  succeeded: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: payments-svc-batch-1-backup-29384756
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-batch-1-backup-29384756
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 45e11776-7e47-484f-9372-f7e25ba84ddd
+  resourceVersion: '4093055'
+  generation: 5
+  creationTimestamp: '2025-11-09T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-09T08:11:16Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: batch/v1
+    kind: CronJob
+    name: payments-svc-batch-1-backup
+    controller: true
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: payments-svc-batch-1-backup-29384756
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: payments-svc-batch-1-backup
+        image: registry.example.com/payments-svc-batch-1-backup:2.3.1
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: payments-svc-batch-1-db-secret
+        command:
+        - /bin/sh
+        - -c
+        - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status:
+  succeeded: 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: payments-svc-batch-1-backups
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-batch-1-backups
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5290aa0d-e9ff-4e7e-80f2-c4aeb2822568
+  resourceVersion: '8243903'
+  generation: 4
+  creationTimestamp: '2025-08-22T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-22T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: payments-svc-batch-1-db-secret
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-batch-1-db-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ceb4b4ea-ce21-4139-919a-d6572f9fd1f0
+  resourceVersion: '2319824'
+  generation: 12
+  creationTimestamp: '2025-10-27T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-27T08:11:16Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAcGF5bWVudHMtc3ZjLWJhdGNoLTEtZGI6NTQzMi9hcHA=

@@ -1,0 +1,261 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: logistics-svc-svc-10-backup
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-10-backup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 62a87347-6cfb-44cc-ab4b-2e93adcff0c5
+  resourceVersion: '9957890'
+  generation: 9
+  creationTimestamp: '2025-08-06T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-06T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: logistics-svc-svc-10-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: logistics-svc-svc-10-backup
+            image: registry.example.com/logistics-svc-svc-10-backup:1.0.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            envFrom:
+            - secretRef:
+                name: logistics-svc-svc-10-db-secret
+            command:
+            - /bin/sh
+            - -c
+            - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: logistics-svc-svc-10-cleanup
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-10-cleanup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2ec3c4bc-5e6e-4893-be5c-93e47e8080c4
+  resourceVersion: '7053189'
+  generation: 3
+  creationTimestamp: '2026-06-03T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-03T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: logistics-svc-svc-10-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: logistics-svc-svc-10-cleanup
+            image: registry.example.com/logistics-svc-svc-10-cleanup:v3.2.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            command:
+            - python
+            - manage.py
+            - clearsessions
+status: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: logistics-svc-svc-10-migrate
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-10-migrate
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5f8ac592-edab-4705-9236-2d7adfec41b6
+  resourceVersion: '9963897'
+  generation: 10
+  creationTimestamp: '2025-10-13T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-13T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-svc-10-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: logistics-svc-svc-10-migrate
+        image: registry.example.com/logistics-svc-svc-10-migrate:2.3.1
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        command:
+        - python
+        - manage.py
+        - migrate
+status:
+  succeeded: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: logistics-svc-svc-10-backup-29384756
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-10-backup-29384756
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 00b34fa9-4450-4a8d-b432-e64d0bdc7be6
+  resourceVersion: '1781144'
+  generation: 2
+  creationTimestamp: '2025-07-07T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-07T08:11:26Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: batch/v1
+    kind: CronJob
+    name: logistics-svc-svc-10-backup
+    controller: true
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-svc-10-backup-29384756
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: logistics-svc-svc-10-backup
+        image: registry.example.com/logistics-svc-svc-10-backup:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: logistics-svc-svc-10-db-secret
+        command:
+        - /bin/sh
+        - -c
+        - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status:
+  succeeded: 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logistics-svc-svc-10-backups
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-10-backups
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: aa381404-5c1e-4585-8bc1-a61dc93a879c
+  resourceVersion: '1794338'
+  generation: 5
+  creationTimestamp: '2025-10-15T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-15T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logistics-svc-svc-10-db-secret
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-svc-10-db-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1a7f4f36-7fa5-4ab9-b047-6e55a9108bec
+  resourceVersion: '5869167'
+  generation: 7
+  creationTimestamp: '2025-10-29T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-29T08:11:26Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAbG9naXN0aWNzLXN2Yy1zdmMtMTAtZGI6NTQzMi9hcHA=

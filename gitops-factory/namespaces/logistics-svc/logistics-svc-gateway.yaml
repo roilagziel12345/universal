@@ -1,0 +1,546 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logistics-svc-gateway-sa
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 468fc736-bd5d-4d50-870f-23d7006fc664
+  resourceVersion: '5137595'
+  generation: 1
+  creationTimestamp: '2026-06-26T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-26T08:11:26Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: logistics-svc-gateway-sa-token-a1b2c
+- name: logistics-svc-gateway-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: logistics-svc-gateway-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-svc-gateway
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: cd7d35c4-f247-4fc1-914c-212553b95826
+  resourceVersion: '5855892'
+  generation: 11
+  creationTimestamp: '2026-07-19T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-19T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: logistics-svc-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-gateway
+        app.kubernetes.io/name: logistics-svc-gateway
+    spec:
+      containers:
+      - name: logistics-svc-gateway
+        image: registry.example.com/logistics-svc-gateway:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_MODE
+          value: full
+        envFrom:
+        - secretRef:
+            name: logistics-svc-gateway-secret
+        - configMapRef:
+            name: logging-defaults
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: cfg
+          mountPath: /etc/app
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: logistics-svc-gateway-sa
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: logistics-svc-gateway-data
+      - name: cfg
+        configMap:
+          name: logistics-svc-gateway-config
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 2
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: logistics-svc-gateway-5982744929
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-5982744929
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 43734496-16cf-4dd9-b4c3-545c4f095217
+  resourceVersion: '7253291'
+  generation: 8
+  creationTimestamp: '2025-10-17T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-17T08:11:26Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: logistics-svc-gateway
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistics-svc-gateway
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-gateway
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-gateway
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 45230248-4381-4ea4-8e30-83d79372d23f
+  resourceVersion: '3194587'
+  generation: 3
+  creationTimestamp: '2026-01-04T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-04T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-gateway
+  sessionAffinity: None
+  clusterIP: 172.30.118.205
+  clusterIPs:
+  - 172.30.118.205
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-gateway-metrics
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-metrics
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fb3f1d47-bddc-49d1-b6d3-a1a6458586e2
+  resourceVersion: '3410554'
+  generation: 8
+  creationTimestamp: '2026-07-16T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-16T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 9090
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-gateway
+  sessionAffinity: None
+  clusterIP: 172.30.221.102
+  clusterIPs:
+  - 172.30.221.102
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: logistics-svc-gateway
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f05548be-bb02-4863-97d4-0c47a563ba5e
+  resourceVersion: '7306700'
+  generation: 7
+  creationTimestamp: '2025-09-30T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-30T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: logistics-svc-gateway
+    weight: 100
+  port:
+    targetPort: http
+  host: logistics-svc-gateway.apps.cluster-generated.local
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: logistics-svc-gateway.apps.cluster-generated.local
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: logistics-svc-gateway-alt
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-alt
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d526c233-9f06-4d32-bbd1-6e8c8719c5d4
+  resourceVersion: '3703680'
+  generation: 4
+  creationTimestamp: '2026-07-28T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-28T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: logistics-svc-gateway-metrics
+    weight: 100
+  port:
+    targetPort: http
+  host: logistics-svc-gateway-metrics.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: logistics-svc-gateway-metrics.apps.example.com
+    routerName: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logistics-svc-gateway-config
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 01fe3e14-7841-4454-a54b-515934a9c140
+  resourceVersion: '1149645'
+  generation: 10
+  creationTimestamp: '2026-03-10T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-10T08:11:26Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_ALL: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logistics-svc-gateway-secret
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 4618909c-2a9f-47c8-9d18-89f436b99ff9
+  resourceVersion: '9107502'
+  generation: 3
+  creationTimestamp: '2026-06-08T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-08T08:11:26Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  TOKEN: Yzk1MTZkNzRlNTYxNGE3ZDg2OGVkNjhhZTMyODg2OTQ=
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logistics-svc-gateway-data
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-data
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 33facc76-469e-4464-ae71-83c3aabc0c0c
+  resourceVersion: '5569119'
+  generation: 4
+  creationTimestamp: '2026-01-24T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-24T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 30Gi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: logistics-svc-gateway
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3515368b-d511-4de0-a6d1-c6381b5e0701
+  resourceVersion: '2011847'
+  generation: 5
+  creationTimestamp: '2025-12-08T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-08T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: logistics-svc-gateway
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: logistics-svc-gateway
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 61bfb5ec-757b-4c03-bcbe-adc8e93169fa
+  resourceVersion: '8312178'
+  generation: 9
+  creationTimestamp: '2025-08-21T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-21T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  selector:
+    matchLabels:
+      app: logistics-svc-gateway
+  minAvailable: 1
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: logistics-svc-gateway-net
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-net
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d5d19d18-3459-4e84-be86-47a1183eea76
+  resourceVersion: '5358048'
+  generation: 10
+  creationTimestamp: '2025-09-06T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-06T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: logistics-svc-gateway
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: logistics-svc-gateway-role
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1fd5ed18-cd55-4330-adee-2fe165137909
+  resourceVersion: '6685795'
+  generation: 10
+  creationTimestamp: '2026-01-13T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-13T08:11:26Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: logistics-svc-gateway-rb
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-gateway-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: edc4df99-4db0-4cf9-a447-05e43162be1e
+  resourceVersion: '5937206'
+  generation: 6
+  creationTimestamp: '2026-06-02T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-02T08:11:26Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: logistics-svc-gateway-role
+subjects:
+- kind: ServiceAccount
+  name: logistics-svc-gateway-sa
+  namespace: logistics-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 22d5145d-c52f-45e6-aab4-afe859655d5f
+  resourceVersion: '6376684'
+  generation: 7
+  creationTimestamp: '2025-12-14T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-14T08:11:26Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '

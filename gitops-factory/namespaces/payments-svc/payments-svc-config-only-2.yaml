@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-svc-config-only-2-reader
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-config-only-2-reader
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 92639749-63c6-4294-85e3-6d570aff5c14
+  resourceVersion: '9615702'
+  generation: 12
+  creationTimestamp: '2026-04-13T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-13T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: payments-svc-config-only-2-reader-token-a1b2c
+- name: payments-svc-config-only-2-reader-dockercfg-x9z8y
+imagePullSecrets:
+- name: payments-svc-config-only-2-reader-dockercfg-x9z8y
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-svc-config-only-2-writer
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-config-only-2-writer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7a1128ff-8ed0-416a-8e57-575c9ce57a55
+  resourceVersion: '3667281'
+  generation: 11
+  creationTimestamp: '2026-02-19T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-19T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: payments-svc-config-only-2-role
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-config-only-2-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ba9468d1-23c4-45d0-bcf7-0f0f72b6ed8f
+  resourceVersion: '6737601'
+  generation: 11
+  creationTimestamp: '2025-11-17T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-17T08:11:16Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: payments-svc-config-only-2-rb
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-config-only-2-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 12af95b9-e9db-4745-9838-c954bb0f8b98
+  resourceVersion: '2496987'
+  generation: 5
+  creationTimestamp: '2025-12-08T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-08T08:11:16Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: payments-svc-config-only-2-role
+subjects:
+- kind: ServiceAccount
+  name: payments-svc-config-only-2-reader
+  namespace: payments-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-svc-config-only-2-settings
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-config-only-2-settings
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: cb558ea5-9919-475c-a560-a80177dbcaa5
+  resourceVersion: '4237722'
+  generation: 12
+  creationTimestamp: '2026-05-20T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-20T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  MODE: readonly
+  RETENTION_DAYS: '30'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-svc-config-only-2-feature-flags
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-config-only-2-feature-flags
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2e3852ab-a69c-4f77-ac71-e9d331ad526f
+  resourceVersion: '9142538'
+  generation: 5
+  creationTimestamp: '2025-10-16T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-16T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  NEW_UI: 'false'

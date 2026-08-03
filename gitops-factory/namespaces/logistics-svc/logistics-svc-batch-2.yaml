@@ -1,0 +1,261 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: logistics-svc-batch-2-backup
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-batch-2-backup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 53d5f85a-bec3-4c40-bdad-a2a3ef15abc7
+  resourceVersion: '8288027'
+  generation: 6
+  creationTimestamp: '2025-12-10T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-10T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: logistics-svc-batch-2-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: logistics-svc-batch-2-backup
+            image: registry.example.com/logistics-svc-batch-2-backup:latest
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            envFrom:
+            - secretRef:
+                name: logistics-svc-batch-2-db-secret
+            command:
+            - /bin/sh
+            - -c
+            - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: logistics-svc-batch-2-cleanup
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-batch-2-cleanup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: befdf168-7918-4b35-b6cc-e74f3820da91
+  resourceVersion: '1662657'
+  generation: 12
+  creationTimestamp: '2025-06-29T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-06-29T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: logistics-svc-batch-2-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: logistics-svc-batch-2-cleanup
+            image: registry.example.com/logistics-svc-batch-2-cleanup:1.0.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            command:
+            - python
+            - manage.py
+            - clearsessions
+status: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: logistics-svc-batch-2-migrate
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-batch-2-migrate
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d7879717-9658-418c-923a-8fc43777c42e
+  resourceVersion: '6109980'
+  generation: 2
+  creationTimestamp: '2025-09-08T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-08T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-batch-2-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: logistics-svc-batch-2-migrate
+        image: registry.example.com/logistics-svc-batch-2-migrate:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        command:
+        - python
+        - manage.py
+        - migrate
+status:
+  succeeded: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: logistics-svc-batch-2-backup-29384756
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-batch-2-backup-29384756
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6403a640-1643-4a09-a1e7-6aa78e99a168
+  resourceVersion: '6772565'
+  generation: 4
+  creationTimestamp: '2025-10-30T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-30T08:11:26Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: batch/v1
+    kind: CronJob
+    name: logistics-svc-batch-2-backup
+    controller: true
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-batch-2-backup-29384756
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: logistics-svc-batch-2-backup
+        image: registry.example.com/logistics-svc-batch-2-backup:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: logistics-svc-batch-2-db-secret
+        command:
+        - /bin/sh
+        - -c
+        - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status:
+  succeeded: 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logistics-svc-batch-2-backups
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-batch-2-backups
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: dc0d298e-6724-4f1c-b661-5666f8c01ebb
+  resourceVersion: '3654277'
+  generation: 8
+  creationTimestamp: '2025-12-23T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-23T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logistics-svc-batch-2-db-secret
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-batch-2-db-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 312bd6c0-f024-43eb-b21d-f4ad9453c10e
+  resourceVersion: '5516778'
+  generation: 5
+  creationTimestamp: '2026-03-15T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-15T08:11:26Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAbG9naXN0aWNzLXN2Yy1iYXRjaC0yLWRiOjU0MzIvYXBw

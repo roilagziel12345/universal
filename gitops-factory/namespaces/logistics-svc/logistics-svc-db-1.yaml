@@ -1,0 +1,193 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logistics-svc-db-1-sa
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-db-1-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 64410052-8cde-499b-bdca-1ee8946dd1d5
+  resourceVersion: '2317531'
+  generation: 8
+  creationTimestamp: '2025-12-26T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-26T08:11:26Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: logistics-svc-db-1-sa-token-a1b2c
+- name: logistics-svc-db-1-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: logistics-svc-db-1-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: logistics-svc-db-1
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-db-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 250a72b6-dedd-4c8b-9bee-cf1e4eae7265
+  resourceVersion: '1818442'
+  generation: 2
+  creationTimestamp: '2026-06-15T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-15T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  serviceName: logistics-svc-db-1
+  replicas: 1
+  revisionHistoryLimit: 10
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app: logistics-svc-db-1
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-db-1
+    spec:
+      containers:
+      - name: logistics-svc-db-1
+        image: registry.example.com/logistics-svc-db-1:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/data
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: logistics-svc-db-1-sa
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: fast-ssd
+    status:
+      phase: Bound
+status:
+  replicas: 1
+  readyReplicas: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-db-1
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-db-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f653e17f-1e8e-4e9f-82ef-244bc8dc4bd8
+  resourceVersion: '6266661'
+  generation: 5
+  creationTimestamp: '2026-02-20T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-20T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-db-1
+  sessionAffinity: None
+  clusterIP: None
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logistics-svc-db-1-creds
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-db-1-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2b1676cd-c275-409e-953a-53163f01108e
+  resourceVersion: '6520993'
+  generation: 3
+  creationTimestamp: '2026-05-21T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-21T08:11:26Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DB_USER: YWRtaW4=
+  DB_PASSWORD: ZWNmNGI3ZTkyYmRlNGViZGJlZTIzZjU0NTY0NzdmOGY=
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5e4c77dc-313a-42c9-8213-36fa0ee39dfd
+  resourceVersion: '2496676'
+  generation: 2
+  creationTimestamp: '2025-09-05T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-05T08:11:26Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'

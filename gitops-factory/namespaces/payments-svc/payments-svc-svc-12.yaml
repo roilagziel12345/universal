@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-svc-svc-12-sa
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-12-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b3d606d2-0ada-47c9-bc23-aac74a438a5d
+  resourceVersion: '4582413'
+  generation: 1
+  creationTimestamp: '2025-11-13T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-13T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: payments-svc-svc-12-sa-token-a1b2c
+- name: payments-svc-svc-12-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: payments-svc-svc-12-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: payments-svc-svc-12
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-12
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a36bb3f0-1bf2-4043-b16a-f515d3245ebc
+  resourceVersion: '5108935'
+  generation: 10
+  creationTimestamp: '2025-07-24T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-24T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: payments-svc-svc-12
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: payments-svc-svc-12
+    spec:
+      containers:
+      - name: payments-svc-svc-12
+        image: registry.example.com/payments-svc-svc-12:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        ports:
+        - name: http
+          containerPort: 9100
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - operator: Exists
+      serviceAccountName: payments-svc-svc-12-sa
+status:
+  desiredNumberScheduled: 3
+  numberReady: 3
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-svc-svc-12-config
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-12-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 88348a61-7fcd-4b2d-938f-dec90a425fc3
+  resourceVersion: '8314801'
+  generation: 3
+  creationTimestamp: '2025-10-07T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-07T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  SCRAPE_INTERVAL: 15s

@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: identity-svc-scanner-a-sa
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-scanner-a-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c0d514de-7328-4754-8105-458a5da7520e
+  resourceVersion: '5593461'
+  generation: 10
+  creationTimestamp: '2026-05-10T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-10T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: identity-svc-scanner-a-sa-token-a1b2c
+- name: identity-svc-scanner-a-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: identity-svc-scanner-a-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: audit-role
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: audit-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 24559957-d71b-4e3d-bc45-2801d552617c
+  resourceVersion: '5346485'
+  generation: 4
+  creationTimestamp: '2025-07-26T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-26T08:11:22Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: identity-svc-scanner-a-audit-rb
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-scanner-a-audit-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 4ad49672-e37a-4541-8a34-9d8883fb6a6d
+  resourceVersion: '2773322'
+  generation: 8
+  creationTimestamp: '2025-07-05T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-05T08:11:22Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: audit-role
+subjects:
+- kind: ServiceAccount
+  name: identity-svc-scanner-a-sa
+  namespace: identity-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-svc-scanner-a-audit-settings
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-scanner-a-audit-settings
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 35b73ffd-c231-47bb-b54b-5037c2262e26
+  resourceVersion: '7931858'
+  generation: 8
+  creationTimestamp: '2025-11-09T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-09T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  AUDIT_ENABLED: 'true'

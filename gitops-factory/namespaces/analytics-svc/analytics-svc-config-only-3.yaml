@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-config-only-3-reader
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-config-only-3-reader
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 27cb0ffa-1469-4cfe-933d-ab22226f41d6
+  resourceVersion: '7088821'
+  generation: 11
+  creationTimestamp: '2026-01-13T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-13T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: analytics-svc-config-only-3-reader-token-a1b2c
+- name: analytics-svc-config-only-3-reader-dockercfg-x9z8y
+imagePullSecrets:
+- name: analytics-svc-config-only-3-reader-dockercfg-x9z8y
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-config-only-3-writer
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-config-only-3-writer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5751da7c-9f46-4066-8d35-799f8834c0b6
+  resourceVersion: '9363113'
+  generation: 1
+  creationTimestamp: '2026-02-20T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-20T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: analytics-svc-config-only-3-role
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-config-only-3-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5b51587d-277b-4f99-ba4f-fff61481c7ba
+  resourceVersion: '4316804'
+  generation: 4
+  creationTimestamp: '2026-07-24T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-24T08:11:30Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: analytics-svc-config-only-3-rb
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-config-only-3-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b83515de-4090-4c58-964f-fc9a2b709900
+  resourceVersion: '7533377'
+  generation: 4
+  creationTimestamp: '2025-09-16T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-16T08:11:30Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: analytics-svc-config-only-3-role
+subjects:
+- kind: ServiceAccount
+  name: analytics-svc-config-only-3-reader
+  namespace: analytics-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-svc-config-only-3-settings
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-config-only-3-settings
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c997c7e1-8858-4405-9c3c-3d8a9bf3ddd7
+  resourceVersion: '6269672'
+  generation: 10
+  creationTimestamp: '2025-09-09T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-09T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  MODE: readonly
+  RETENTION_DAYS: '30'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-svc-config-only-3-feature-flags
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-config-only-3-feature-flags
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 033f4375-b803-4fef-82fb-b435c2ba5af6
+  resourceVersion: '3396204'
+  generation: 12
+  creationTimestamp: '2025-10-24T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-24T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  NEW_UI: 'false'

@@ -1,0 +1,28 @@
+{
+  "namespaces": {
+    "analytics-svc": {
+      "microservices": 50,
+      "warnings": 0
+    },
+    "identity-svc": {
+      "microservices": 50,
+      "warnings": 0
+    },
+    "logistics-svc": {
+      "microservices": 50,
+      "warnings": 0
+    },
+    "payments-svc": {
+      "microservices": 50,
+      "warnings": 1
+    },
+    "platform-ops": {
+      "microservices": 50,
+      "warnings": 0
+    }
+  },
+  "totals": {
+    "microservices": 250,
+    "warnings": 51
+  }
+}

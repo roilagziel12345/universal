@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'analytics-svc-agent-2' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over analytics-svc-agent-2-values.yaml.
+
+image:
+  repository: registry.example.com/analytics-svc-agent-2
+  tag: 2.3.1

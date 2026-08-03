@@ -1,0 +1,73 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  annotations:
+    generated-by: convert_to_universal_chart.py
+  name: identity-svc-microservices
+  namespace: argocd
+spec:
+  generators:
+  - git:
+      directories:
+      - path: gitops-values/identity-svc/*
+      repoURL: https://git.example.com/gitops/microservices-values.git
+      revision: main
+  template:
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: '0'
+      labels:
+        managed-by: universal-chart-converter
+        namespace: identity-svc
+      name: identity-svc-{{path.basename}}
+    spec:
+      destination:
+        namespace: identity-svc
+        server: https://kubernetes.default.svc
+      ignoreDifferences:
+      - group: apps
+        jqPathExpressions: &id001
+        - .spec.template.spec.securityContext.runAsUser
+        - .spec.template.spec.securityContext.runAsGroup
+        - .spec.template.spec.securityContext.fsGroup
+        - .spec.template.spec.securityContext.seLinuxOptions
+        - .spec.template.spec.containers[]?.securityContext.runAsUser
+        - .spec.template.spec.containers[]?.securityContext.capabilities
+        kind: Deployment
+      - group: apps
+        jqPathExpressions:
+        - .spec.template.spec.securityContext.runAsUser
+        - .spec.template.spec.securityContext.runAsGroup
+        - .spec.template.spec.securityContext.fsGroup
+        - .spec.template.spec.securityContext.seLinuxOptions
+        - .spec.template.spec.containers[]?.securityContext.runAsUser
+        - .spec.template.spec.containers[]?.securityContext.capabilities
+        - .spec.volumeClaimTemplates
+        kind: StatefulSet
+      - group: apps
+        jqPathExpressions: *id001
+        kind: DaemonSet
+      - group: ''
+        jsonPointers:
+        - /secrets
+        - /imagePullSecrets
+        kind: ServiceAccount
+      project: default
+      sources:
+      - helm:
+          valueFiles:
+          - $values/gitops-values/identity-svc/{{path.basename}}/{{path.basename}}-values.yaml
+          - $values/gitops-values/identity-svc/{{path.basename}}/{{path.basename}}-values-minimal.yaml
+        path: Universal-chart
+        repoURL: https://git.example.com/gitops/universal-chart.git
+        targetRevision: main
+      - ref: values
+        repoURL: https://git.example.com/gitops/microservices-values.git
+        targetRevision: main
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - ServerSideApply=true

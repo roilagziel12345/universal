@@ -1,0 +1,193 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: identity-svc-svc-18-sa
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-18-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9c2ed746-a320-4b93-af90-8acb2b387101
+  resourceVersion: '9210543'
+  generation: 10
+  creationTimestamp: '2026-03-09T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-09T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: identity-svc-svc-18-sa-token-a1b2c
+- name: identity-svc-svc-18-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: identity-svc-svc-18-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: identity-svc-svc-18
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-18
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 74ee12aa-4356-40bb-b6d7-9428e8d3871e
+  resourceVersion: '3575536'
+  generation: 10
+  creationTimestamp: '2026-07-22T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-22T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  serviceName: identity-svc-svc-18
+  replicas: 1
+  revisionHistoryLimit: 10
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app: identity-svc-svc-18
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: identity-svc-svc-18
+    spec:
+      containers:
+      - name: identity-svc-svc-18
+        image: registry.example.com/identity-svc-svc-18:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/data
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: identity-svc-svc-18-sa
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: fast-ssd
+    status:
+      phase: Bound
+status:
+  replicas: 1
+  readyReplicas: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc-svc-18
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-18
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2bbfcebc-7f1e-4d5b-a317-570b877f36d7
+  resourceVersion: '6782298'
+  generation: 2
+  creationTimestamp: '2026-05-18T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-18T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: identity-svc-svc-18
+  sessionAffinity: None
+  clusterIP: None
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-svc-svc-18-creds
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-18-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c10ce9c7-9b0f-49a9-aa9d-51d1985a140d
+  resourceVersion: '2825462'
+  generation: 10
+  creationTimestamp: '2026-02-27T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-27T08:11:22Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DB_USER: YWRtaW4=
+  DB_PASSWORD: NTgxYTBlYWU2OTM1NDhlYzlkMGExMDc1MzRjZGVkZWU=
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f41e1353-5b30-491e-8f6b-dc4e23097249
+  resourceVersion: '9607579'
+  generation: 7
+  creationTimestamp: '2026-03-29T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-29T08:11:22Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'

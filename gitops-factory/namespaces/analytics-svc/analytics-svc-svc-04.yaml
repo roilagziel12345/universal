@@ -1,0 +1,193 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-svc-04-sa
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-04-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 14c3be11-0d13-45d7-b690-12e35da04d6a
+  resourceVersion: '7019359'
+  generation: 6
+  creationTimestamp: '2026-02-19T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-19T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: analytics-svc-svc-04-sa-token-a1b2c
+- name: analytics-svc-svc-04-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: analytics-svc-svc-04-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: analytics-svc-svc-04
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-04
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 67c2e08a-79c8-4fb6-8f8b-2dc6d1b6ee28
+  resourceVersion: '1660439'
+  generation: 7
+  creationTimestamp: '2026-03-05T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-05T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  serviceName: analytics-svc-svc-04
+  replicas: 3
+  revisionHistoryLimit: 10
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app: analytics-svc-svc-04
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-svc-04
+    spec:
+      containers:
+      - name: analytics-svc-svc-04
+        image: registry.example.com/analytics-svc-svc-04:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/data
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: analytics-svc-svc-04-sa
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: fast-ssd
+    status:
+      phase: Bound
+status:
+  replicas: 3
+  readyReplicas: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-svc-04
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-04
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 75c8cfa2-11fa-4472-a06e-d3a29b89e2fa
+  resourceVersion: '5837688'
+  generation: 2
+  creationTimestamp: '2025-08-20T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-20T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-svc-04
+  sessionAffinity: None
+  clusterIP: None
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: analytics-svc-svc-04-creds
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-svc-04-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 73742975-2c0c-49a2-b736-ff8d89ce092d
+  resourceVersion: '3094493'
+  generation: 8
+  creationTimestamp: '2025-10-20T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-20T08:11:30Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DB_USER: YWRtaW4=
+  DB_PASSWORD: N2U3NGRhOGZmYmNmNDdhNmFkMWNkNzU0MGY3OThmNDk=
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ba68f93d-fb73-43b3-a57f-0cf891028152
+  resourceVersion: '6031382'
+  generation: 4
+  creationTimestamp: '2026-02-20T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-20T08:11:30Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'

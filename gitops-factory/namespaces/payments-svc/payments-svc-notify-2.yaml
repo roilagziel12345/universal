@@ -1,0 +1,290 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-svc-notify-2-sa
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-notify-2-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2193a97b-322e-4dc1-ae8b-ddb2a43373cf
+  resourceVersion: '9758155'
+  generation: 4
+  creationTimestamp: '2025-12-30T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-30T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: payments-svc-notify-2-sa-token-a1b2c
+- name: payments-svc-notify-2-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: payments-svc-notify-2-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-svc-notify-2
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-notify-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ff27e902-b221-48dc-bf9f-6416f5d93b5e
+  resourceVersion: '2575836'
+  generation: 11
+  creationTimestamp: '2026-03-28T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-28T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: payments-svc-notify-2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: payments-svc-notify-2
+        app.kubernetes.io/name: payments-svc-notify-2
+    spec:
+      containers:
+      - name: payments-svc-notify-2
+        image: registry.example.com/payments-svc-notify-2:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 9000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: payments-svc-notify-2-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: payments-svc-notify-2-sa
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 1
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: payments-svc-notify-2-4803044105
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-notify-2-4803044105
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e32aed7b-05a7-4f80-b860-477f9c1ad8eb
+  resourceVersion: '7232769'
+  generation: 4
+  creationTimestamp: '2025-06-27T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-06-27T08:11:16Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: payments-svc-notify-2
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-svc-notify-2
+  template:
+    metadata:
+      labels:
+        app: payments-svc-notify-2
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payments-svc-notify-2-33053-trxyz
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-notify-2-33053-trxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2b96c80f-fcc6-47f0-b26a-73324d404e7b
+  resourceVersion: '9451717'
+  generation: 4
+  creationTimestamp: '2026-07-05T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-05T08:11:16Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: payments-svc-notify-2-rs
+    controller: true
+spec:
+  containers:
+  - name: payments-svc-notify-2
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-svc-notify-2
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-notify-2
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 14a8f3f4-4487-4fa7-8f7a-2b1e01781b95
+  resourceVersion: '7895419'
+  generation: 11
+  creationTimestamp: '2026-05-23T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-23T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: payments-svc-notify-2
+  sessionAffinity: None
+  clusterIP: 172.30.62.117
+  clusterIPs:
+  - 172.30.62.117
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-svc-notify-2-config
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-notify-2-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3f114104-e580-42fe-9b82-27267cf72d02
+  resourceVersion: '7525149'
+  generation: 10
+  creationTimestamp: '2025-07-09T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-09T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '200'
+  FEATURE_FLAG_BETA: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: payments-svc-notify-2-secret
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-notify-2-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 29d06d6f-8221-4814-9b31-0f8fa1389b8c
+  resourceVersion: '8568772'
+  generation: 7
+  creationTimestamp: '2025-07-27T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-27T08:11:16Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: YTM3MWVkZjg3NDljNDNiZDk4ZWZhYzc4ODU0N2M3Zjc=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 354928df-207d-4aab-b910-aa2c09130482
+  resourceVersion: '1967825'
+  generation: 1
+  creationTimestamp: '2025-09-06T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-06T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '

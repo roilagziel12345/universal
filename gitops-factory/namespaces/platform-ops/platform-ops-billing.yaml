@@ -1,0 +1,319 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-billing-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9146d53f-f24f-4bbc-ba66-2f6d333e58bf
+  resourceVersion: '7095376'
+  generation: 3
+  creationTimestamp: '2026-06-05T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-05T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-billing-sa-token-a1b2c
+- name: platform-ops-billing-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-billing-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-billing
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fda3755d-5517-4e69-a783-f41af7b91931
+  resourceVersion: '9701308'
+  generation: 9
+  creationTimestamp: '2025-08-26T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-26T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-billing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-billing
+        app.kubernetes.io/name: platform-ops-billing
+    spec:
+      containers:
+      - name: platform-ops-billing
+        image: registry.example.com/platform-ops-billing:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: platform-ops-billing-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: platform-ops-billing-sa
+status:
+  replicas: 3
+  readyReplicas: 3
+  availableReplicas: 3
+  observedGeneration: 3
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: platform-ops-billing-9445165272
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing-9445165272
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 264b4d50-37fe-43c9-9591-035781b4eb47
+  resourceVersion: '9813442'
+  generation: 6
+  creationTimestamp: '2025-07-12T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-12T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-billing
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-ops-billing
+  template:
+    metadata:
+      labels:
+        app: platform-ops-billing
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: platform-ops-billing-14697-ckxyz
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing-14697-ckxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 45e0bb0a-2eff-41f7-8c02-c678a9974b60
+  resourceVersion: '6283568'
+  generation: 7
+  creationTimestamp: '2026-02-15T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-15T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: platform-ops-billing-rs
+    controller: true
+spec:
+  containers:
+  - name: platform-ops-billing
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-billing
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e98d8528-e8b4-4802-ba36-99a0cd460d1c
+  resourceVersion: '9335372'
+  generation: 2
+  creationTimestamp: '2025-12-24T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-24T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-billing
+  sessionAffinity: None
+  clusterIP: 172.30.34.195
+  clusterIPs:
+  - 172.30.34.195
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-ops-billing-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ee8162b0-027e-48d0-8ba8-955b2a651330
+  resourceVersion: '2147210'
+  generation: 12
+  creationTimestamp: '2026-05-23T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-23T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '100'
+  FEATURE_FLAG_BETA: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-billing-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9695d98c-950a-4f0c-ac42-6368a92cdea2
+  resourceVersion: '5623202'
+  generation: 9
+  creationTimestamp: '2026-03-12T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-12T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: YmY2MTRhYmJmMmRkNDQ5Y2E0M2FlOTQ0ZDIwMDUyZTE=
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: platform-ops-billing
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d65a1212-390e-4f43-b083-a08b4aa9fa0d
+  resourceVersion: '1076175'
+  generation: 2
+  creationTimestamp: '2026-04-14T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-14T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-billing
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: app-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1b9ab035-cf5a-4def-8b2d-553d70bc3011
+  resourceVersion: '8974251'
+  generation: 2
+  creationTimestamp: '2025-09-11T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-11T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_X: 'off'
+  EXTRA: '1'

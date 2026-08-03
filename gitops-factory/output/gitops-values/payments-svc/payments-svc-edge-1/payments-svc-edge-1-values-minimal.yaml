@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'payments-svc-edge-1' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over payments-svc-edge-1-values.yaml.
+
+image:
+  repository: registry.example.com/payments-svc-edge-1
+  tag: 1.0.0

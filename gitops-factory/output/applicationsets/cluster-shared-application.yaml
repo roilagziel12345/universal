@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-shared-resources
+  namespace: argocd
+spec:
+  destination:
+    namespace: platform-shared
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+  - helm:
+      valueFiles:
+      - $values/gitops-values/cluster-shared/cluster-shared-values.yaml
+    path: Universal-chart
+    repoURL: https://git.example.com/gitops/universal-chart.git
+    targetRevision: main
+  - ref: values
+    repoURL: https://git.example.com/gitops/microservices-values.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true

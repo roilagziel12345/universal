@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker-sa
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: worker-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3967d15a-6bab-4609-a4ad-4cbd7756263c
+  resourceVersion: '4820376'
+  generation: 8
+  creationTimestamp: '2026-07-05T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-05T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: worker-sa-token-a1b2c
+- name: worker-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: worker-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: identity-svc-worker-a-role
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-worker-a-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 14a66857-10e0-4cb1-a345-ad3e7496fc7f
+  resourceVersion: '7995137'
+  generation: 5
+  creationTimestamp: '2025-09-28T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-28T08:11:22Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: identity-svc-worker-a-rb
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-worker-a-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8dd2ccf9-eb27-4088-8e51-38d309e10790
+  resourceVersion: '237194'
+  generation: 2
+  creationTimestamp: '2025-10-29T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-29T08:11:22Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: identity-svc-worker-a-role
+subjects:
+- kind: ServiceAccount
+  name: worker-sa
+  namespace: identity-svc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-svc-worker-a
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-worker-a
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9c582952-f461-4ac7-944a-d8608d093bde
+  resourceVersion: '4537118'
+  generation: 12
+  creationTimestamp: '2026-05-23T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-23T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: identity-svc-worker-a
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: identity-svc-worker-a
+        app.kubernetes.io/name: identity-svc-worker-a
+    spec:
+      containers:
+      - name: identity-svc-worker-a
+        image: registry.example.com/identity-svc-worker-a:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: worker-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc-worker-a
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-worker-a
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9de74e45-8ed1-483b-a35b-2eaf44d1ff0a
+  resourceVersion: '6820644'
+  generation: 1
+  creationTimestamp: '2026-07-07T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-07T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: identity-svc-worker-a
+  sessionAffinity: None
+  clusterIP: 172.30.206.94
+  clusterIPs:
+  - 172.30.206.94
+status:
+  loadBalancer: {}

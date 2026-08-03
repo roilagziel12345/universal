@@ -1,0 +1,287 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: identity-svc-svc-20-sa
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 86a2329d-68a8-413a-9fee-8cac23f34266
+  resourceVersion: '6398619'
+  generation: 7
+  creationTimestamp: '2025-10-20T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-20T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: identity-svc-svc-20-sa-token-a1b2c
+- name: identity-svc-svc-20-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: identity-svc-svc-20-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-svc-svc-20
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b337269a-589e-4999-8cdc-186929c52037
+  resourceVersion: '5055645'
+  generation: 4
+  creationTimestamp: '2025-06-30T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-06-30T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: identity-svc-svc-20
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: identity-svc-svc-20
+        app.kubernetes.io/name: identity-svc-svc-20
+    spec:
+      containers:
+      - name: identity-svc-svc-20
+        image: registry.example.com/identity-svc-svc-20:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: identity-svc-svc-20-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: identity-svc-svc-20-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 2
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: identity-svc-svc-20-5647317872
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20-5647317872
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 56df6e56-aefe-4e3c-a079-8d9394f48eb2
+  resourceVersion: '6475341'
+  generation: 12
+  creationTimestamp: '2026-05-13T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-13T08:11:22Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: identity-svc-svc-20
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-svc-svc-20
+  template:
+    metadata:
+      labels:
+        app: identity-svc-svc-20
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: identity-svc-svc-20-93086-epxyz
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20-93086-epxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 06fe98d7-9b55-4531-bc76-488d64595d24
+  resourceVersion: '6151545'
+  generation: 2
+  creationTimestamp: '2026-02-18T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-18T08:11:22Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: identity-svc-svc-20-rs
+    controller: true
+spec:
+  containers:
+  - name: identity-svc-svc-20
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc-svc-20
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e9140899-9a50-462d-a81f-57394fe1d929
+  resourceVersion: '7561429'
+  generation: 6
+  creationTimestamp: '2026-02-23T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-23T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: identity-svc-svc-20
+  sessionAffinity: None
+  clusterIP: 172.30.46.2
+  clusterIPs:
+  - 172.30.46.2
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-svc-svc-20-config
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 821d27f3-b63a-4034-aa5f-0e33b16ea54f
+  resourceVersion: '1564604'
+  generation: 3
+  creationTimestamp: '2026-05-24T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-24T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '100'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-svc-svc-20-secret
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 13ae039d-d141-48be-a870-f3fd16c9248e
+  resourceVersion: '7630347'
+  generation: 9
+  creationTimestamp: '2025-12-22T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-22T08:11:22Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: NWIyZTk5ZDhhNWVjNDE1OWFlYWU2MTcyYmRmZjFjN2I=
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: identity-svc-svc-20
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-20
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8cfbc8b2-7230-4a7d-8f35-cc82736949c7
+  resourceVersion: '9398265'
+  generation: 2
+  creationTimestamp: '2026-01-30T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-30T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  selector:
+    matchLabels:
+      app: identity-svc-svc-20
+  minAvailable: 1

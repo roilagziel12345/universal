@@ -1,0 +1,261 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: platform-ops-svc-17-backup
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-17-backup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 35b635f5-9304-409c-901c-23ecf7895974
+  resourceVersion: '9819808'
+  generation: 4
+  creationTimestamp: '2025-07-16T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-16T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: platform-ops-svc-17-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: platform-ops-svc-17-backup
+            image: registry.example.com/platform-ops-svc-17-backup:2.3.1
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            envFrom:
+            - secretRef:
+                name: platform-ops-svc-17-db-secret
+            command:
+            - /bin/sh
+            - -c
+            - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: platform-ops-svc-17-cleanup
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-17-cleanup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 877accaa-d36c-4f1d-a355-368ad5077397
+  resourceVersion: '2475493'
+  generation: 8
+  creationTimestamp: '2026-07-12T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-12T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: platform-ops-svc-17-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: platform-ops-svc-17-cleanup
+            image: registry.example.com/platform-ops-svc-17-cleanup:1.0.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            command:
+            - python
+            - manage.py
+            - clearsessions
+status: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: platform-ops-svc-17-migrate
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-17-migrate
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9a1979e0-ba32-4762-8a5f-6c0c3b88e34c
+  resourceVersion: '868424'
+  generation: 4
+  creationTimestamp: '2025-12-01T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-01T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: platform-ops-svc-17-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: platform-ops-svc-17-migrate
+        image: registry.example.com/platform-ops-svc-17-migrate:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        command:
+        - python
+        - manage.py
+        - migrate
+status:
+  succeeded: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: platform-ops-svc-17-backup-29384756
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-17-backup-29384756
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 07279419-443c-4afb-bca1-5ba60b0afbf9
+  resourceVersion: '2290059'
+  generation: 1
+  creationTimestamp: '2025-08-05T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-05T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: batch/v1
+    kind: CronJob
+    name: platform-ops-svc-17-backup
+    controller: true
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: platform-ops-svc-17-backup-29384756
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: platform-ops-svc-17-backup
+        image: registry.example.com/platform-ops-svc-17-backup:2.3.1
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: platform-ops-svc-17-db-secret
+        command:
+        - /bin/sh
+        - -c
+        - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status:
+  succeeded: 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: platform-ops-svc-17-backups
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-17-backups
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: de7817ad-34c8-4d2e-97b6-754dbb44ca5d
+  resourceVersion: '938156'
+  generation: 5
+  creationTimestamp: '2026-05-03T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-03T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-svc-17-db-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-17-db-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f414b61c-4a5e-4264-8353-f2b6996b9a90
+  resourceVersion: '7753507'
+  generation: 10
+  creationTimestamp: '2026-06-11T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-11T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAcGxhdGZvcm0tb3BzLXN2Yy0xNy1kYjo1NDMyL2FwcA==

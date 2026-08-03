@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker-sa
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: worker-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1e141bd0-5818-46f8-9e10-32865432ec1d
+  resourceVersion: '1181661'
+  generation: 4
+  creationTimestamp: '2026-07-19T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-19T08:11:26Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: worker-sa-token-a1b2c
+- name: worker-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: worker-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: logistics-svc-worker-b-role
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-worker-b-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e4f5e74b-b3fd-4b1b-977d-bde2bb010329
+  resourceVersion: '7539543'
+  generation: 3
+  creationTimestamp: '2025-09-03T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-03T08:11:26Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: logistics-svc-worker-b-rb
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-worker-b-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: bd3c0bbc-ed54-4c03-a9d4-9961263b1bd5
+  resourceVersion: '5662484'
+  generation: 2
+  creationTimestamp: '2026-06-13T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-13T08:11:26Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: logistics-svc-worker-b-role
+subjects:
+- kind: ServiceAccount
+  name: worker-sa
+  namespace: logistics-svc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-svc-worker-b
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-worker-b
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8f500a64-aff5-4f7b-b16f-dc503a12623c
+  resourceVersion: '949559'
+  generation: 3
+  creationTimestamp: '2025-12-06T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-06T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: logistics-svc-worker-b
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: logistics-svc-worker-b
+        app.kubernetes.io/name: logistics-svc-worker-b
+    spec:
+      containers:
+      - name: logistics-svc-worker-b
+        image: registry.example.com/logistics-svc-worker-b:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: worker-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logistics-svc-worker-b
+  namespace: logistics-svc
+  labels:
+    app.kubernetes.io/name: logistics-svc-worker-b
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: abd21819-74fb-409c-be65-c0886beeeefe
+  resourceVersion: '6726978'
+  generation: 8
+  creationTimestamp: '2025-07-25T08:11:26Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-25T08:11:26Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: logistics-svc-worker-b
+  sessionAffinity: None
+  clusterIP: 172.30.221.211
+  clusterIPs:
+  - 172.30.221.211
+status:
+  loadBalancer: {}

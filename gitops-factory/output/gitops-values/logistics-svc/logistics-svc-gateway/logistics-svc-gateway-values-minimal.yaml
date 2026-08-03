@@ -1,0 +1,10 @@
+# Auto-generated MINIMAL override for 'logistics-svc-gateway' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over logistics-svc-gateway-values.yaml.
+
+env:
+  APP_MODE:
+    value: full
+image:
+  repository: registry.example.com/logistics-svc-gateway
+  tag: 1.0.0

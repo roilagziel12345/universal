@@ -1,0 +1,5 @@
+# Auto-generated MINIMAL override for 'logistics-svc-svc-16' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over logistics-svc-svc-16-values.yaml.
+
+{}

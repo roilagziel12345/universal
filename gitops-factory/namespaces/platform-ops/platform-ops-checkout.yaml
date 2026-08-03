@@ -1,0 +1,345 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-checkout-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 98b41fd9-07c5-4e3b-aadd-47804c58f283
+  resourceVersion: '7586970'
+  generation: 5
+  creationTimestamp: '2025-07-22T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-22T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-checkout-sa-token-a1b2c
+- name: platform-ops-checkout-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-checkout-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-checkout
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a835b67d-0cd9-4cd3-a0ec-68fe30db62bf
+  resourceVersion: '159272'
+  generation: 10
+  creationTimestamp: '2026-04-18T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-18T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-checkout
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-checkout
+        app.kubernetes.io/name: platform-ops-checkout
+    spec:
+      containers:
+      - name: platform-ops-checkout
+        image: registry.example.com/platform-ops-checkout:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: platform-ops-checkout-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: platform-ops-checkout-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 5
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: platform-ops-checkout-5347399246
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout-5347399246
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7800eb08-9e0e-4d04-ba66-f54119aea9f8
+  resourceVersion: '8465828'
+  generation: 9
+  creationTimestamp: '2025-11-18T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-18T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-checkout
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-ops-checkout
+  template:
+    metadata:
+      labels:
+        app: platform-ops-checkout
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: platform-ops-checkout-10753-shxyz
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout-10753-shxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 70847f1f-d450-486d-9d0f-857c6490b300
+  resourceVersion: '9979470'
+  generation: 11
+  creationTimestamp: '2026-04-10T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-10T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: platform-ops-checkout-rs
+    controller: true
+spec:
+  containers:
+  - name: platform-ops-checkout
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-checkout
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f30f1efc-14ac-4d51-85ae-be217041ad79
+  resourceVersion: '7513438'
+  generation: 2
+  creationTimestamp: '2026-01-02T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-02T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-checkout
+  sessionAffinity: None
+  clusterIP: 172.30.243.117
+  clusterIPs:
+  - 172.30.243.117
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-ops-checkout-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5bf51f90-b3d1-4eb2-a616-1abc97062abb
+  resourceVersion: '9282868'
+  generation: 5
+  creationTimestamp: '2026-03-27T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-27T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '200'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-checkout-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1913c707-db4f-431a-8302-4e62700d3158
+  resourceVersion: '9454114'
+  generation: 4
+  creationTimestamp: '2025-09-16T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-16T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: Y2U5MzEzMmM3NmU2NDU2ZDk2ZTdhODg0NDg3ZTg5Njg=
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: platform-ops-checkout
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f9b77581-0533-4197-a3bf-c8e3f2b5d6db
+  resourceVersion: '1023819'
+  generation: 11
+  creationTimestamp: '2026-05-16T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-16T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: platform-ops-checkout
+    weight: 100
+  port:
+    targetPort: http
+  host: platform-ops-checkout.apps.cluster-generated.local
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: platform-ops-checkout.apps.cluster-generated.local
+    routerName: default
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-ops-checkout
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-checkout
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 697496ac-c450-4667-bee8-14bfe180eaec
+  resourceVersion: '9798786'
+  generation: 10
+  creationTimestamp: '2026-07-14T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-14T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  selector:
+    matchLabels:
+      app: platform-ops-checkout
+  minAvailable: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: app-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 43b7608b-a4bb-4c0c-90c1-ec542ba5212e
+  resourceVersion: '5655122'
+  generation: 2
+  creationTimestamp: '2026-02-28T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-28T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_X: 'on'

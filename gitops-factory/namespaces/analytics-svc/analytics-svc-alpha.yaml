@@ -1,0 +1,322 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-alpha-sa
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: edf9e46c-2c3f-46da-b762-5b27859c85dd
+  resourceVersion: '2771308'
+  generation: 3
+  creationTimestamp: '2025-12-14T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-14T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: analytics-svc-alpha-sa-token-a1b2c
+- name: analytics-svc-alpha-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: analytics-svc-alpha-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-svc-alpha
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 4b83f21e-ad77-40a4-80f7-c1856f0b46dd
+  resourceVersion: '3771175'
+  generation: 8
+  creationTimestamp: '2026-07-10T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-10T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: analytics-svc-alpha
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-alpha
+        app.kubernetes.io/name: analytics-svc-alpha
+    spec:
+      containers:
+      - name: analytics-svc-alpha
+        image: registry.example.com/analytics-svc-alpha:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: analytics-svc-alpha-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: analytics-svc-alpha-sa
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 4
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: analytics-svc-alpha-5564953924
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha-5564953924
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 078d05e1-e6a4-4d7d-9f44-37d0e4141292
+  resourceVersion: '4026181'
+  generation: 1
+  creationTimestamp: '2026-01-22T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-22T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-svc-alpha
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-svc-alpha
+  template:
+    metadata:
+      labels:
+        app: analytics-svc-alpha
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: analytics-svc-alpha-97632-gtxyz
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha-97632-gtxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b4b12c5c-52b6-44eb-bf5b-454efe06c174
+  resourceVersion: '6611121'
+  generation: 8
+  creationTimestamp: '2026-01-27T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-27T08:11:30Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: analytics-svc-alpha-rs
+    controller: true
+spec:
+  containers:
+  - name: analytics-svc-alpha
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-svc-alpha
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c50c44b7-2601-4e30-b5e4-94382189cae5
+  resourceVersion: '769489'
+  generation: 11
+  creationTimestamp: '2026-07-07T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-07T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: analytics-svc-alpha
+  sessionAffinity: None
+  clusterIP: 172.30.232.226
+  clusterIPs:
+  - 172.30.232.226
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-svc-alpha-config
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 8c2a01ef-4b7f-464c-b070-c0c467dfe7f7
+  resourceVersion: '8847185'
+  generation: 11
+  creationTimestamp: '2025-08-04T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-04T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '100'
+  FEATURE_FLAG_BETA: 'true'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: analytics-svc-alpha-secret
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fc814a59-3eca-4bab-a651-413b3fec3bb5
+  resourceVersion: '4517710'
+  generation: 10
+  creationTimestamp: '2026-03-12T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-12T08:11:30Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: N2ZhZmNlODk2YTk4NDAxNmE2ZWY3NTAxYTBlNjgwYWQ=
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: analytics-svc-alpha
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-alpha
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 500e2710-e7ad-4cca-b0c4-628d6ae042c0
+  resourceVersion: '6450486'
+  generation: 6
+  creationTimestamp: '2025-08-30T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-30T08:11:30Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-svc-alpha
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: healthcheck-scripts
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: healthcheck-scripts
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 44b9b668-8ff2-4675-9b70-d7b5e6cf12d4
+  resourceVersion: '8768165'
+  generation: 5
+  creationTimestamp: '2026-06-21T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-21T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  healthcheck.sh: '#!/bin/sh
+
+    curl -f http://localhost:8080/health
+
+    '

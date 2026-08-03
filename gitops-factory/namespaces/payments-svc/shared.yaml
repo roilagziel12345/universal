@@ -1,0 +1,297 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 354928df-207d-4aab-b910-aa2c09130482
+  resourceVersion: '1967825'
+  generation: 1
+  creationTimestamp: '2025-09-06T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-06T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-defaults
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: logging-defaults
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: de5fe96c-f301-466c-8a31-bcb63bd883e9
+  resourceVersion: '4714226'
+  generation: 4
+  creationTimestamp: '2025-07-16T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-16T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  LOG_LEVEL: info
+  LOG_FORMAT: json
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-pull-creds
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: registry-pull-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fbb32050-ad42-4f31-8bb7-b07f18ace3b1
+  resourceVersion: '2441057'
+  generation: 12
+  creationTimestamp: '2026-04-07T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-07T08:11:16Z'
+    fieldsType: FieldsV1
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6e319
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shared-db-creds
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: shared-db-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b75db587-fcbc-4044-b397-35f9a50dfd86
+  resourceVersion: '9249732'
+  generation: 2
+  creationTimestamp: '2026-06-08T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-08T08:11:16Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly9zdmM6cGFzc0BwYXltZW50cy1zdmMtc2hhcmVkLWRiOjU0MzIvcGxhdGZvcm0=
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: namespace-deployer
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: namespace-deployer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 163149f5-d9aa-40a7-88cf-7306f60e86da
+  resourceVersion: '7178673'
+  generation: 1
+  creationTimestamp: '2025-10-01T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-01T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: namespace-deployer-token-a1b2c
+- name: namespace-deployer-dockercfg-x9z8y
+imagePullSecrets:
+- name: namespace-deployer-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-viewer
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e758ae31-09fb-46aa-ae1b-a190a249992f
+  resourceVersion: '1671945'
+  generation: 4
+  creationTimestamp: '2026-07-15T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-15T08:11:16Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: namespace-viewer-binding
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer-binding
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 638f35c3-5672-4c1e-b6c8-281dbae41000
+  resourceVersion: '8578454'
+  generation: 10
+  creationTimestamp: '2026-04-02T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-02T08:11:16Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: namespace-viewer
+subjects:
+- kind: ServiceAccount
+  name: namespace-deployer
+  namespace: payments-svc
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: default-deny-all
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 95af0293-3aca-4823-87d0-0fa3a22d563f
+  resourceVersion: '9516129'
+  generation: 4
+  creationTimestamp: '2026-07-17T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-17T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: e4d2accd-8b0c-4ffb-b9a5-344aafd04abf
+  resourceVersion: '9242600'
+  generation: 7
+  creationTimestamp: '2025-07-29T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-29T08:11:16Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cross-namespace-log-reader
+  labels:
+    app.kubernetes.io/name: cross-namespace-log-reader
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 98e016e6-f79a-4fc4-b2d1-83eae2bbb731
+  resourceVersion: '7636477'
+  generation: 10
+  creationTimestamp: '2026-04-09T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-09T08:11:16Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - get
+  - list
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: restricted-custom-scc
+  labels:
+    app.kubernetes.io/name: restricted-custom-scc
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a4a9fbc8-86db-4718-8fd2-b2a4853529a2
+  resourceVersion: '209031'
+  generation: 3
+  creationTimestamp: '2026-03-10T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-10T08:11:16Z'
+    fieldsType: FieldsV1
+allowPrivilegedContainer: false
+allowPrivilegeEscalation: false
+requiredDropCapabilities:
+- ALL
+runAsUser:
+  type: MustRunAsRange
+seLinuxContext:
+  type: MustRunAs
+fsGroup:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+users:
+- system:serviceaccount:platform-shared:scc-user

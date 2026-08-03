@@ -1,0 +1,10 @@
+# Auto-generated MINIMAL override for 'logistics-svc-svc-09' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over logistics-svc-svc-09-values.yaml.
+
+env:
+  APP_ENV:
+    value: staging
+image:
+  repository: registry.example.com/logistics-svc-svc-09
+  tag: 1.0.0

@@ -1,0 +1,280 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-svc-svc-23
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-23
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6d0eefd7-fbdb-478a-84fb-c44e17f08999
+  resourceVersion: '4802656'
+  generation: 7
+  creationTimestamp: '2026-01-19T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-19T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: identity-svc-svc-23
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: identity-svc-svc-23
+        app.kubernetes.io/name: identity-svc-svc-23
+    spec:
+      containers:
+      - name: identity-svc-svc-23
+        image: registry.example.com/identity-svc-svc-23:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc-svc-23
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-23
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 39a7454c-14b1-4b15-8725-d9fdff2362f2
+  resourceVersion: '3452088'
+  generation: 10
+  creationTimestamp: '2025-10-15T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-15T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: identity-svc-svc-23
+  sessionAffinity: None
+  clusterIP: 172.30.58.239
+  clusterIPs:
+  - 172.30.58.239
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc-svc-23-admin
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-23-admin
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 4025d939-8d42-4f80-9fcd-a8798ea1a253
+  resourceVersion: '9329132'
+  generation: 1
+  creationTimestamp: '2025-07-02T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-02T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8081
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: identity-svc-svc-23
+  sessionAffinity: None
+  clusterIP: 172.30.92.175
+  clusterIPs:
+  - 172.30.92.175
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: identity-svc-svc-23
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-23
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b7b7e4ba-793c-4946-8fb0-53e7ee2e0265
+  resourceVersion: '7844735'
+  generation: 12
+  creationTimestamp: '2025-07-23T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-23T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: identity-svc-svc-23
+    weight: 100
+  port:
+    targetPort: http
+  host: identity-svc-svc-23.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: identity-svc-svc-23.apps.example.com
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: identity-svc-svc-23-admin-console
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-23-admin-console
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fd4da11a-e443-4e3b-8c4b-4b42f8ca6400
+  resourceVersion: '7456053'
+  generation: 5
+  creationTimestamp: '2026-04-14T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-14T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: identity-svc-svc-23-admin
+    weight: 100
+  port:
+    targetPort: http
+  host: identity-svc-svc-23-admin.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: identity-svc-svc-23-admin.apps.example.com
+    routerName: default
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: identity-svc-svc-23-allow-ingress
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-23-allow-ingress
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 690ca733-1582-4bde-8d46-ffbdb6bbd530
+  resourceVersion: '1260289'
+  generation: 7
+  creationTimestamp: '2025-08-10T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-10T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: identity-svc-svc-23
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: identity-svc-svc-23-deny-egress-external
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-svc-23-deny-egress-external
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2725b175-5b84-4f00-a109-2125b5f84d01
+  resourceVersion: '8476917'
+  generation: 3
+  creationTimestamp: '2025-08-20T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-20T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: identity-svc-svc-23
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP

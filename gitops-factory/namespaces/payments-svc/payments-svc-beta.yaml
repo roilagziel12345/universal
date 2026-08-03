@@ -1,0 +1,288 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payments-svc-beta-sa
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-beta-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9194c953-37d4-432c-aad3-2003d90ce5a7
+  resourceVersion: '4553786'
+  generation: 1
+  creationTimestamp: '2025-10-06T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-06T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: payments-svc-beta-sa-token-a1b2c
+- name: payments-svc-beta-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: payments-svc-beta-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-svc-beta
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-beta
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 694c41d6-d3a7-4db4-8bfe-775ff825a9cd
+  resourceVersion: '5362632'
+  generation: 7
+  creationTimestamp: '2025-07-22T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-22T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: payments-svc-beta
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: payments-svc-beta
+        app.kubernetes.io/name: payments-svc-beta
+    spec:
+      containers:
+      - name: payments-svc-beta
+        image: registry.example.com/payments-svc-beta:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: production
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: payments-svc-beta-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: payments-svc-beta-sa
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 10
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: payments-svc-beta-5791662169
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-beta-5791662169
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5750b52c-f9b2-4886-9995-66598c86dcbd
+  resourceVersion: '3288992'
+  generation: 5
+  creationTimestamp: '2025-10-08T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-08T08:11:16Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: payments-svc-beta
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-svc-beta
+  template:
+    metadata:
+      labels:
+        app: payments-svc-beta
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payments-svc-beta-15817-qaxyz
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-beta-15817-qaxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 99a9800b-5ee6-47fa-854b-56a5ddf452ab
+  resourceVersion: '9133725'
+  generation: 11
+  creationTimestamp: '2025-11-06T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-06T08:11:16Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: payments-svc-beta-rs
+    controller: true
+spec:
+  containers:
+  - name: payments-svc-beta
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-svc-beta
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-beta
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 40669c5e-25cf-4114-a332-4f408d6222cc
+  resourceVersion: '1273965'
+  generation: 11
+  creationTimestamp: '2025-12-22T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-22T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: payments-svc-beta
+  sessionAffinity: None
+  clusterIP: 172.30.100.94
+  clusterIPs:
+  - 172.30.100.94
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-svc-beta-config
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-beta-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 24193c10-8822-44f7-a38c-3940962b6e7b
+  resourceVersion: '2190865'
+  generation: 12
+  creationTimestamp: '2025-08-25T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-25T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '100'
+  FEATURE_FLAG_BETA: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: payments-svc-beta-secret
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-beta-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 71344373-b659-48d5-beb0-d5e1e91b1fd4
+  resourceVersion: '8608103'
+  generation: 5
+  creationTimestamp: '2026-02-27T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-27T08:11:16Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: MGM0Nzc0MjRiZTU0NDFjYzllOGQ5MjMxNWIxZTIyZTk=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: healthcheck-scripts
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: healthcheck-scripts
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 62bb4519-ea8b-4a70-9669-2312433eb3ff
+  resourceVersion: '2235534'
+  generation: 4
+  creationTimestamp: '2025-10-20T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-20T08:11:16Z'
+    fieldsType: FieldsV1
+data:
+  healthcheck.sh: '#!/bin/sh
+
+    curl -f http://localhost:8080/health
+
+    '

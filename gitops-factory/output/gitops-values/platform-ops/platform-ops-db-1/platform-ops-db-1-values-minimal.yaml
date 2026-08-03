@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'platform-ops-db-1' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over platform-ops-db-1-values.yaml.
+
+image:
+  repository: registry.example.com/platform-ops-db-1
+  tag: 1.0.0

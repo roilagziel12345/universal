@@ -1,0 +1,280 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-svc-svc-10
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-10
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 266ee508-67dc-469b-bc41-23409d25590b
+  resourceVersion: '9314376'
+  generation: 3
+  creationTimestamp: '2026-03-16T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-16T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: payments-svc-svc-10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: payments-svc-svc-10
+        app.kubernetes.io/name: payments-svc-svc-10
+    spec:
+      containers:
+      - name: payments-svc-svc-10
+        image: registry.example.com/payments-svc-svc-10:2.3.1
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+status:
+  replicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  observedGeneration: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-svc-svc-10
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-10
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: ffe62ec7-a0d3-420b-9559-4918f33732a9
+  resourceVersion: '8232114'
+  generation: 2
+  creationTimestamp: '2025-08-07T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-07T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: payments-svc-svc-10
+  sessionAffinity: None
+  clusterIP: 172.30.224.226
+  clusterIPs:
+  - 172.30.224.226
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-svc-svc-10-admin
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-10-admin
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6d0dcf5f-b966-43d1-9484-971c1c19e01d
+  resourceVersion: '4114745'
+  generation: 12
+  creationTimestamp: '2025-09-11T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-11T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8081
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: payments-svc-svc-10
+  sessionAffinity: None
+  clusterIP: 172.30.14.250
+  clusterIPs:
+  - 172.30.14.250
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: payments-svc-svc-10
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-10
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b6d09474-b34b-487d-bc7c-3050b4ea3747
+  resourceVersion: '5313522'
+  generation: 9
+  creationTimestamp: '2026-05-10T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-10T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: payments-svc-svc-10
+    weight: 100
+  port:
+    targetPort: http
+  host: payments-svc-svc-10.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: payments-svc-svc-10.apps.example.com
+    routerName: default
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: payments-svc-svc-10-admin-console
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-10-admin-console
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 0d659193-24ec-4527-8bde-caf4d7cd4098
+  resourceVersion: '9365241'
+  generation: 7
+  creationTimestamp: '2026-07-23T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-23T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: payments-svc-svc-10-admin
+    weight: 100
+  port:
+    targetPort: http
+  host: payments-svc-svc-10-admin.apps.example.com
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: payments-svc-svc-10-admin.apps.example.com
+    routerName: default
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: payments-svc-svc-10-allow-ingress
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-10-allow-ingress
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3c162ebf-a244-4c75-b62a-c6b53a3bb46e
+  resourceVersion: '3869851'
+  generation: 2
+  creationTimestamp: '2026-06-13T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-13T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: payments-svc-svc-10
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: payments-svc-svc-10-deny-egress-external
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-svc-10-deny-egress-external
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f5e700c2-c513-4800-b7ba-97c8319f67d0
+  resourceVersion: '2070754'
+  generation: 11
+  creationTimestamp: '2025-12-06T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-06T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector:
+    matchLabels:
+      app: payments-svc-svc-10
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP

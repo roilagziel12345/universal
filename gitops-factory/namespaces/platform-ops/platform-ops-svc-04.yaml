@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-svc-04-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-04-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: dd441a16-3c57-4562-b9ae-84456a7533b9
+  resourceVersion: '2240029'
+  generation: 5
+  creationTimestamp: '2026-01-05T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-05T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-svc-04-sa-token-a1b2c
+- name: platform-ops-svc-04-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-svc-04-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: platform-ops-svc-04
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-04
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 72490581-66dc-43fc-9515-d05a095bfc28
+  resourceVersion: '9308764'
+  generation: 1
+  creationTimestamp: '2026-01-22T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-22T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-svc-04
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: platform-ops-svc-04
+    spec:
+      containers:
+      - name: platform-ops-svc-04
+        image: registry.example.com/platform-ops-svc-04:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        ports:
+        - name: http
+          containerPort: 9100
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - operator: Exists
+      serviceAccountName: platform-ops-svc-04-sa
+status:
+  desiredNumberScheduled: 3
+  numberReady: 3
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-ops-svc-04-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-svc-04-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 745a8dda-51a6-453b-a845-84c7aa226d0c
+  resourceVersion: '9495748'
+  generation: 6
+  creationTimestamp: '2026-07-30T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-30T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  SCRAPE_INTERVAL: 15s

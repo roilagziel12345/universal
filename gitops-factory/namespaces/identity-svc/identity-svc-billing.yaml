@@ -1,0 +1,355 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: identity-svc-billing-sa
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: bad161e6-edde-4763-8302-efb94a40e842
+  resourceVersion: '3127557'
+  generation: 9
+  creationTimestamp: '2025-09-25T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-25T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: identity-svc-billing-sa-token-a1b2c
+- name: identity-svc-billing-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: identity-svc-billing-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-svc-billing
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a343b887-2118-4b6c-bb9d-b4b5b2561af7
+  resourceVersion: '5601583'
+  generation: 11
+  creationTimestamp: '2026-06-20T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-20T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: identity-svc-billing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: identity-svc-billing
+        app.kubernetes.io/name: identity-svc-billing
+    spec:
+      containers:
+      - name: identity-svc-billing
+        image: registry.example.com/identity-svc-billing:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 9000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: identity-svc-billing-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: identity-svc-billing-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 5
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: identity-svc-billing-6611356986
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing-6611356986
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9bd2768e-a8c3-40dc-970e-b4d9fcf5db7e
+  resourceVersion: '7249041'
+  generation: 3
+  creationTimestamp: '2025-09-25T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-25T08:11:22Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: identity-svc-billing
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-svc-billing
+  template:
+    metadata:
+      labels:
+        app: identity-svc-billing
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: identity-svc-billing-68183-nrxyz
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing-68183-nrxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 45824d36-27e1-42f4-92e1-27ec1e0c3004
+  resourceVersion: '6014963'
+  generation: 10
+  creationTimestamp: '2026-07-09T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-09T08:11:22Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: identity-svc-billing-rs
+    controller: true
+spec:
+  containers:
+  - name: identity-svc-billing
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc-billing
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9db78fb1-1095-4cd6-8434-b572c8cd9e88
+  resourceVersion: '1062308'
+  generation: 2
+  creationTimestamp: '2025-09-06T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-06T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: identity-svc-billing
+  sessionAffinity: None
+  clusterIP: 172.30.222.71
+  clusterIPs:
+  - 172.30.222.71
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-svc-billing-config
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 1edfc59d-ae03-4150-a602-9e81d7b790e9
+  resourceVersion: '8708154'
+  generation: 12
+  creationTimestamp: '2026-01-25T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-25T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '200'
+  FEATURE_FLAG_BETA: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-svc-billing-secret
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: cd33cdba-abb7-404e-bb20-4e4d8ff5cbba
+  resourceVersion: '2784131'
+  generation: 1
+  creationTimestamp: '2025-08-17T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-17T08:11:22Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: MDc3MDhmNmQ1YTM3NGM5NmJkZWY0ZjkzZjhmNTU3Zjg=
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: identity-svc-billing
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7d28a6ef-d82b-4650-a9a0-7ac5ebd1d11f
+  resourceVersion: '7451320'
+  generation: 1
+  creationTimestamp: '2025-09-22T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-22T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: identity-svc-billing
+    weight: 100
+  port:
+    targetPort: http
+  host: identity-svc-billing.apps.cluster-generated.local
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: identity-svc-billing.apps.cluster-generated.local
+    routerName: default
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: identity-svc-billing
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-billing
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5fde7b54-5d92-45ad-9cc6-a41a79a60145
+  resourceVersion: '6245971'
+  generation: 6
+  creationTimestamp: '2026-04-01T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-01T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: identity-svc-billing
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: app-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a21fb5c7-038f-453e-bf4e-b173d3d7065b
+  resourceVersion: '643335'
+  generation: 10
+  creationTimestamp: '2025-10-13T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-13T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  FEATURE_X: 'off'
+  EXTRA: '1'

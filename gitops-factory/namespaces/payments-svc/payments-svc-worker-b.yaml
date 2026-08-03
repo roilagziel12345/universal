@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker-sa
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: worker-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9a67b035-d9de-4bda-8dda-69b895892adc
+  resourceVersion: '8291131'
+  generation: 4
+  creationTimestamp: '2026-04-09T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-09T08:11:16Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: worker-sa-token-a1b2c
+- name: worker-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: worker-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: payments-svc-worker-b-role
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-worker-b-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fca73a4e-94cf-448b-b8c2-1af35db73007
+  resourceVersion: '7412114'
+  generation: 8
+  creationTimestamp: '2026-03-13T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-13T08:11:16Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: payments-svc-worker-b-rb
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-worker-b-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9a4f2b96-bce3-4b2c-9d8c-6bc63557c385
+  resourceVersion: '6623941'
+  generation: 6
+  creationTimestamp: '2026-07-16T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-16T08:11:16Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: payments-svc-worker-b-role
+subjects:
+- kind: ServiceAccount
+  name: worker-sa
+  namespace: payments-svc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-svc-worker-b
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-worker-b
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 30fb8391-a859-4657-9891-f3e3a785b10a
+  resourceVersion: '2868991'
+  generation: 8
+  creationTimestamp: '2025-07-25T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-25T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: payments-svc-worker-b
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: payments-svc-worker-b
+        app.kubernetes.io/name: payments-svc-worker-b
+    spec:
+      containers:
+      - name: payments-svc-worker-b
+        image: registry.example.com/payments-svc-worker-b:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: worker-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-svc-worker-b
+  namespace: payments-svc
+  labels:
+    app.kubernetes.io/name: payments-svc-worker-b
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6d82eb20-baa9-4e3c-bf23-9571590d92b4
+  resourceVersion: '9568926'
+  generation: 11
+  creationTimestamp: '2026-01-10T08:11:16Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-10T08:11:16Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: payments-svc-worker-b
+  sessionAffinity: None
+  clusterIP: 172.30.13.233
+  clusterIPs:
+  - 172.30.13.233
+status:
+  loadBalancer: {}

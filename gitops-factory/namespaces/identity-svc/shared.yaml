@@ -1,0 +1,259 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-ca-bundle
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: namespace-ca-bundle
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 552db085-1097-4345-8d59-181f3e844bf3
+  resourceVersion: '2032288'
+  generation: 7
+  creationTimestamp: '2026-03-04T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-04T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIBFAKECERTDATA==
+
+    -----END CERTIFICATE-----
+
+    '
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-defaults
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: logging-defaults
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 69e41e9e-153c-4a0a-8a5c-7142c304c3da
+  resourceVersion: '5548705'
+  generation: 3
+  creationTimestamp: '2026-07-20T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-07-20T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  LOG_LEVEL: info
+  LOG_FORMAT: json
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-pull-creds
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: registry-pull-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 73836d15-cdc5-4e7f-8d8b-a487ef54fbf9
+  resourceVersion: '7819145'
+  generation: 12
+  creationTimestamp: '2025-09-17T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-17T08:11:22Z'
+    fieldsType: FieldsV1
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6e319
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shared-db-creds
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: shared-db-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b2a50d85-ba71-499e-a444-01ed25fd531c
+  resourceVersion: '1578574'
+  generation: 7
+  creationTimestamp: '2026-01-26T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-26T08:11:22Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly9zdmM6cGFzc0BpZGVudGl0eS1zdmMtc2hhcmVkLWRiOjU0MzIvcGxhdGZvcm0=
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: namespace-deployer
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: namespace-deployer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 520b47f2-7476-41d3-9bfe-2e8441356ee7
+  resourceVersion: '4182173'
+  generation: 7
+  creationTimestamp: '2026-06-06T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-06T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: namespace-deployer-token-a1b2c
+- name: namespace-deployer-dockercfg-x9z8y
+imagePullSecrets:
+- name: namespace-deployer-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-viewer
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 50b503bb-6607-44f9-97de-503e9f81c2d0
+  resourceVersion: '6818433'
+  generation: 9
+  creationTimestamp: '2025-10-02T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-02T08:11:22Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: namespace-viewer-binding
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: namespace-viewer-binding
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fab5795e-4dcc-41ae-8c16-15553204af26
+  resourceVersion: '6739863'
+  generation: 5
+  creationTimestamp: '2026-06-20T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-20T08:11:22Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: namespace-viewer
+subjects:
+- kind: ServiceAccount
+  name: namespace-deployer
+  namespace: identity-svc
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: default-deny-all
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: fd25b2d4-57d9-4d63-9fed-98b88ef9f58b
+  resourceVersion: '5796087'
+  generation: 4
+  creationTimestamp: '2025-07-14T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-14T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3728814c-1a17-42b5-b932-7fb30372f74e
+  resourceVersion: '2920798'
+  generation: 2
+  creationTimestamp: '2026-02-10T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-10T08:11:22Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cross-namespace-log-reader
+  labels:
+    app.kubernetes.io/name: cross-namespace-log-reader
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 826d56cc-2668-45ac-911f-ec85aa1c2324
+  resourceVersion: '2013049'
+  generation: 9
+  creationTimestamp: '2025-11-11T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-11T08:11:22Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - pods/log
+  - events
+  verbs:
+  - get
+  - list
+  - watch

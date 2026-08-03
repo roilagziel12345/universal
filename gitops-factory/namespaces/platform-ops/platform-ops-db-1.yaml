@@ -1,0 +1,193 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-db-1-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-db-1-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 6a5d6fb9-ec28-40c6-8f9c-001666c89c77
+  resourceVersion: '3487856'
+  generation: 8
+  creationTimestamp: '2025-12-10T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-10T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-db-1-sa-token-a1b2c
+- name: platform-ops-db-1-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-db-1-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: platform-ops-db-1
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-db-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: dd8bb6b6-fe16-463a-a1ef-6995362a43a3
+  resourceVersion: '2851363'
+  generation: 12
+  creationTimestamp: '2025-08-10T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-10T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  serviceName: platform-ops-db-1
+  replicas: 3
+  revisionHistoryLimit: 10
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app: platform-ops-db-1
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: platform-ops-db-1
+    spec:
+      containers:
+      - name: platform-ops-db-1
+        image: registry.example.com/platform-ops-db-1:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/data
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: platform-ops-db-1-sa
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: fast-ssd
+    status:
+      phase: Bound
+status:
+  replicas: 3
+  readyReplicas: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-db-1
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-db-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d9b9977d-986b-451b-8623-2a18db67d335
+  resourceVersion: '2172728'
+  generation: 2
+  creationTimestamp: '2025-07-20T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-20T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-db-1
+  sessionAffinity: None
+  clusterIP: None
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-db-1-creds
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-db-1-creds
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 833f4b1c-14bd-4a7b-917f-dfc910ee9b1f
+  resourceVersion: '7639654'
+  generation: 11
+  creationTimestamp: '2026-06-02T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-02T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DB_USER: YWRtaW4=
+  DB_PASSWORD: N2Q1NTE2M2MyMjgwNDY2Y2JlOWZkM2M1ZGIzODMyZDI=
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  labels:
+    app.kubernetes.io/name: fast-ssd
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 75ed40d7-28e7-44f9-b479-537315ef90e5
+  resourceVersion: '1531206'
+  generation: 9
+  creationTimestamp: '2026-01-26T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-26T08:11:34Z'
+    fieldsType: FieldsV1
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: 'true'

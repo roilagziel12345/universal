@@ -1,0 +1,10 @@
+# Auto-generated MINIMAL override for 'payments-svc-notify-1' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over payments-svc-notify-1-values.yaml.
+
+env:
+  APP_ENV:
+    value: production
+image:
+  repository: registry.example.com/payments-svc-notify-1
+  tag: latest

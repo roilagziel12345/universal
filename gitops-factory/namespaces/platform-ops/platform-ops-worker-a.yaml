@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: worker-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 624f8eec-7c1d-424c-b4d1-37ec7b27527f
+  resourceVersion: '7913071'
+  generation: 10
+  creationTimestamp: '2025-07-09T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-09T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: worker-sa-token-a1b2c
+- name: worker-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: worker-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-ops-worker-a-role
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-worker-a-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 15cd6a71-ceb0-4580-9120-0a161e33cdb7
+  resourceVersion: '1658874'
+  generation: 12
+  creationTimestamp: '2026-05-24T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-24T08:11:34Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-ops-worker-a-rb
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-worker-a-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3fc7c4ee-b3cc-4f60-8010-f2186b0b06b4
+  resourceVersion: '1731802'
+  generation: 8
+  creationTimestamp: '2025-12-03T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-03T08:11:34Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: platform-ops-worker-a-role
+subjects:
+- kind: ServiceAccount
+  name: worker-sa
+  namespace: platform-ops
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-worker-a
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-worker-a
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7bfb6c93-ef67-4a1b-a865-3bfccf073bed
+  resourceVersion: '7908058'
+  generation: 8
+  creationTimestamp: '2025-08-14T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-08-14T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-worker-a
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-worker-a
+        app.kubernetes.io/name: platform-ops-worker-a
+    spec:
+      containers:
+      - name: platform-ops-worker-a
+        image: registry.example.com/platform-ops-worker-a:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: worker-sa
+status:
+  replicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  observedGeneration: 4
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-worker-a
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-worker-a
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: b80ec076-b689-40fb-a104-8f8cd975bcde
+  resourceVersion: '4429406'
+  generation: 6
+  creationTimestamp: '2025-09-18T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-18T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-worker-a
+  sessionAffinity: None
+  clusterIP: 172.30.114.37
+  clusterIPs:
+  - 172.30.114.37
+status:
+  loadBalancer: {}

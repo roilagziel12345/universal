@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'platform-ops-worker-b' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over platform-ops-worker-b-values.yaml.
+
+image:
+  repository: registry.example.com/platform-ops-worker-b
+  tag: 1.0.0

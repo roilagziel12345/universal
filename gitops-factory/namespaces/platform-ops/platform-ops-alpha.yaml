@@ -1,0 +1,358 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-ops-alpha-sa
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 9fbcf3e9-4516-40af-afb0-e77c120df62a
+  resourceVersion: '4918203'
+  generation: 7
+  creationTimestamp: '2025-07-25T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-25T08:11:34Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: platform-ops-alpha-sa-token-a1b2c
+- name: platform-ops-alpha-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: platform-ops-alpha-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-ops-alpha
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 157bcf96-5ffc-4469-abc3-58b4823cad0c
+  resourceVersion: '6036673'
+  generation: 3
+  creationTimestamp: '2025-10-09T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-09T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: platform-ops-alpha
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: platform-ops-alpha
+        app.kubernetes.io/name: platform-ops-alpha
+    spec:
+      containers:
+      - name: platform-ops-alpha
+        image: registry.example.com/platform-ops-alpha:latest
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        ports:
+        - name: http
+          containerPort: 9000
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: APP_ENV
+          value: staging
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: logging-defaults
+              key: LOG_LEVEL
+        envFrom:
+        - secretRef:
+            name: platform-ops-alpha-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+      serviceAccountName: platform-ops-alpha-sa
+status:
+  replicas: 3
+  readyReplicas: 3
+  availableReplicas: 3
+  observedGeneration: 10
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: platform-ops-alpha-7711463369
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha-7711463369
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 15778f44-1a9c-424a-a683-664fad483ad7
+  resourceVersion: '8450710'
+  generation: 8
+  creationTimestamp: '2025-11-06T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-06T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-alpha
+    controller: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-ops-alpha
+  template:
+    metadata:
+      labels:
+        app: platform-ops-alpha
+    spec:
+      containers: []
+status:
+  replicas: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: platform-ops-alpha-33580-hkxyz
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha-33580-hkxyz
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 957d8462-71e4-4a01-9114-fb6238ce1e44
+  resourceVersion: '126523'
+  generation: 2
+  creationTimestamp: '2026-04-22T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-04-22T08:11:34Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: ReplicaSet
+    name: platform-ops-alpha-rs
+    controller: true
+spec:
+  containers:
+  - name: platform-ops-alpha
+    image: registry.example.com/placeholder:latest
+status:
+  phase: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-ops-alpha
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: cf91c686-c388-43e1-8f3d-752eb2933f75
+  resourceVersion: '2078465'
+  generation: 12
+  creationTimestamp: '2025-09-13T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-13T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: platform-ops-alpha
+  sessionAffinity: None
+  clusterIP: 172.30.12.120
+  clusterIPs:
+  - 172.30.12.120
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-ops-alpha-config
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 51643aba-4a5f-4264-af2b-f348ffb87b1c
+  resourceVersion: '863232'
+  generation: 6
+  creationTimestamp: '2025-12-31T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-31T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  MAX_CONNECTIONS: '50'
+  FEATURE_FLAG_BETA: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-ops-alpha-secret
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a9814767-e3f8-4bb0-a84c-842ce6c799b0
+  resourceVersion: '9502211'
+  generation: 11
+  creationTimestamp: '2026-02-01T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-01T08:11:34Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  API_KEY: MTczMmZmMjZiY2Q3NDMxOGIxNDI0MjhhOWNlNzU2NGM=
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: platform-ops-alpha
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: f6e502c3-bc0a-4a02-80b3-acb2f2fa0f9b
+  resourceVersion: '3475360'
+  generation: 12
+  creationTimestamp: '2025-09-06T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-06T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  to:
+    kind: Service
+    name: platform-ops-alpha
+    weight: 100
+  port:
+    targetPort: http
+  host: platform-ops-alpha.apps.cluster-generated.local
+  wildcardPolicy: None
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+status:
+  ingress:
+  - host: platform-ops-alpha.apps.cluster-generated.local
+    routerName: default
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: platform-ops-alpha
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: platform-ops-alpha
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7e9225bc-55ff-475d-88e8-98dbc5c81e93
+  resourceVersion: '5263566'
+  generation: 5
+  creationTimestamp: '2026-06-26T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-06-26T08:11:34Z'
+    fieldsType: FieldsV1
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: platform-ops-alpha
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: healthcheck-scripts
+  namespace: platform-ops
+  labels:
+    app.kubernetes.io/name: healthcheck-scripts
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: c4988155-5d38-433f-9211-1c97dbcc3003
+  resourceVersion: '202865'
+  generation: 2
+  creationTimestamp: '2026-02-15T08:11:34Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-02-15T08:11:34Z'
+    fieldsType: FieldsV1
+data:
+  healthcheck.sh: '#!/bin/sh
+
+    curl -f http://localhost:8080/health
+
+    '

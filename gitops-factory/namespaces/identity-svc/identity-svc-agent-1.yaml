@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: identity-svc-agent-1-sa
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-agent-1-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3a1ba480-d048-43e1-ae14-c8c53e32444f
+  resourceVersion: '7769093'
+  generation: 2
+  creationTimestamp: '2025-09-15T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-15T08:11:22Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: identity-svc-agent-1-sa-token-a1b2c
+- name: identity-svc-agent-1-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: identity-svc-agent-1-sa-dockercfg-x9z8y
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: identity-svc-agent-1
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-agent-1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: def31743-432c-4c15-bac2-6b6767ad0f7b
+  resourceVersion: '9093490'
+  generation: 1
+  creationTimestamp: '2025-11-17T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-17T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: identity-svc-agent-1
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: identity-svc-agent-1
+    spec:
+      containers:
+      - name: identity-svc-agent-1
+        image: registry.example.com/identity-svc-agent-1:1.0.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        ports:
+        - name: http
+          containerPort: 9100
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - operator: Exists
+      serviceAccountName: identity-svc-agent-1-sa
+status:
+  desiredNumberScheduled: 3
+  numberReady: 3
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-svc-agent-1-config
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-agent-1-config
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 5438549b-e1ef-476e-9bcb-114fcf645b71
+  resourceVersion: '8746569'
+  generation: 10
+  creationTimestamp: '2025-09-10T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-09-10T08:11:22Z'
+    fieldsType: FieldsV1
+data:
+  SCRAPE_INTERVAL: 15s

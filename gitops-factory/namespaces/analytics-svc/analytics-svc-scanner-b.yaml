@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: analytics-svc-scanner-b-sa
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-scanner-b-sa
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 2cf82494-cf8e-412e-8872-9b4fea49cf81
+  resourceVersion: '9362783'
+  generation: 9
+  creationTimestamp: '2025-12-31T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-12-31T08:11:30Z'
+    fieldsType: FieldsV1
+automountServiceAccountToken: true
+secrets:
+- name: analytics-svc-scanner-b-sa-token-a1b2c
+- name: analytics-svc-scanner-b-sa-dockercfg-x9z8y
+imagePullSecrets:
+- name: analytics-svc-scanner-b-sa-dockercfg-x9z8y
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: audit-role
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: audit-role
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: d4d0cd3a-ae5f-4285-b253-af001fd6a010
+  resourceVersion: '3098417'
+  generation: 6
+  creationTimestamp: '2025-11-25T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-11-25T08:11:30Z'
+    fieldsType: FieldsV1
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: analytics-svc-scanner-b-audit-rb
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-scanner-b-audit-rb
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: de4989db-cf2d-448e-b809-bd46e62b4d7f
+  resourceVersion: '9409867'
+  generation: 8
+  creationTimestamp: '2025-10-17T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-10-17T08:11:30Z'
+    fieldsType: FieldsV1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: audit-role
+subjects:
+- kind: ServiceAccount
+  name: analytics-svc-scanner-b-sa
+  namespace: analytics-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-svc-scanner-b-audit-settings
+  namespace: analytics-svc
+  labels:
+    app.kubernetes.io/name: analytics-svc-scanner-b-audit-settings
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 62b9d628-a16e-4d00-a7c1-32137d37613e
+  resourceVersion: '5244785'
+  generation: 10
+  creationTimestamp: '2026-03-23T08:11:30Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-23T08:11:30Z'
+    fieldsType: FieldsV1
+data:
+  AUDIT_ENABLED: 'true'

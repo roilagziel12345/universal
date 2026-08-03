@@ -1,0 +1,261 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: identity-svc-batch-1-backup
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-batch-1-backup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 31838d7a-3ead-4e93-86ea-01fff870bde2
+  resourceVersion: '3450371'
+  generation: 10
+  creationTimestamp: '2026-05-09T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-05-09T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: 0 2 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: identity-svc-batch-1-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: identity-svc-batch-1-backup
+            image: registry.example.com/identity-svc-batch-1-backup:v3.2.0
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            envFrom:
+            - secretRef:
+                name: identity-svc-batch-1-db-secret
+            command:
+            - /bin/sh
+            - -c
+            - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: identity-svc-batch-1-cleanup
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-batch-1-cleanup
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 88e84c5c-5a14-4a13-bed7-8c3ea80adfa0
+  resourceVersion: '975431'
+  generation: 11
+  creationTimestamp: '2026-03-24T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-24T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: identity-svc-batch-1-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: identity-svc-batch-1-cleanup
+            image: registry.example.com/identity-svc-batch-1-cleanup:2.3.1
+            imagePullPolicy: IfNotPresent
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            command:
+            - python
+            - manage.py
+            - clearsessions
+status: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: identity-svc-batch-1-migrate
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-batch-1-migrate
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a250cde4-85fb-4776-a072-6702eb7ee1fd
+  resourceVersion: '9403649'
+  generation: 2
+  creationTimestamp: '2026-01-21T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-01-21T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: identity-svc-batch-1-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: identity-svc-batch-1-migrate
+        image: registry.example.com/identity-svc-batch-1-migrate:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        command:
+        - python
+        - manage.py
+        - migrate
+status:
+  succeeded: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: identity-svc-batch-1-backup-29384756
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-batch-1-backup-29384756
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: a0c50835-99b6-4796-8363-be98898fac9b
+  resourceVersion: '8755523'
+  generation: 2
+  creationTimestamp: '2025-07-31T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2025-07-31T08:11:22Z'
+    fieldsType: FieldsV1
+  ownerReferences:
+  - apiVersion: batch/v1
+    kind: CronJob
+    name: identity-svc-batch-1-backup
+    controller: true
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: identity-svc-batch-1-backup-29384756
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: identity-svc-batch-1-backup
+        image: registry.example.com/identity-svc-batch-1-backup:v3.2.0
+        imagePullPolicy: IfNotPresent
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: identity-svc-batch-1-db-secret
+        command:
+        - /bin/sh
+        - -c
+        - pg_dump $DATABASE_URL | gzip > /backup/$(date +%Y%m%d).sql.gz
+status:
+  succeeded: 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: identity-svc-batch-1-backups
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-batch-1-backups
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 7ee13112-3198-49d2-8d6b-f11e2c7650bc
+  resourceVersion: '1507191'
+  generation: 3
+  creationTimestamp: '2026-03-07T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-07T08:11:22Z'
+    fieldsType: FieldsV1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+status:
+  phase: Bound
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-svc-batch-1-db-secret
+  namespace: identity-svc
+  labels:
+    app.kubernetes.io/name: identity-svc-batch-1-db-secret
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"v1","kind":"redacted"}'
+  uid: 3928f0f5-48b1-4222-a543-8d51c1243490
+  resourceVersion: '7638325'
+  generation: 9
+  creationTimestamp: '2026-03-13T08:11:22Z'
+  managedFields:
+  - manager: kubectl-client-side-apply
+    operation: Update
+    apiVersion: v1
+    time: '2026-03-13T08:11:22Z'
+    fieldsType: FieldsV1
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAaWRlbnRpdHktc3ZjLWJhdGNoLTEtZGI6NTQzMi9hcHA=
