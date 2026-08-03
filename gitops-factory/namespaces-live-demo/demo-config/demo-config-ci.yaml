@@ -3,6 +3,11 @@ kind: ServiceAccount
 metadata:
   name: demo-config-ci
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: demo-config-ci-deployer
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -31,3 +36,37 @@ metadata:
 data:
   ENVIRONMENT: "demo"
   LOG_LEVEL: "info"
+---
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: demo-config-vault
+spec:
+  provider:
+    vault:
+      server: https://vault.example.com:8200
+      path: secret
+      version: v2
+      auth:
+        kubernetes:
+          mountPath: kubernetes
+          role: demo-config-ci
+          serviceAccountRef:
+            name: demo-config-ci
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: demo-config-db-credentials
+spec:
+  secretStoreRef:
+    name: demo-config-vault
+    kind: SecretStore
+  refreshInterval: 1h
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: secret/data/demo-config/db
+        property: password

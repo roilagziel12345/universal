@@ -8,8 +8,8 @@ metadata:
 spec:
   generators:
   - git:
-      directories:
-      - path: analytics-svc/values/*
+      files:
+      - path: analytics-svc/releases/*.yaml
       repoURL: https://git.example.com/gitops/microservices-values.git
       revision: main
   template:
@@ -19,7 +19,7 @@ spec:
       labels:
         managed-by: universal-chart-converter
         namespace: analytics-svc
-      name: analytics-svc-{{path.basename}}
+      name: analytics-svc-{{release}}
     spec:
       destination:
         namespace: analytics-svc
@@ -56,8 +56,8 @@ spec:
       sources:
       - helm:
           valueFiles:
-          - $values/analytics-svc/values/{{path.basename}}/{{path.basename}}-values.yaml
-          - $values/analytics-svc/values-minimal/{{path.basename}}/{{path.basename}}-values-minimal.yaml
+          - $values/analytics-svc/values/{{release}}-values.yaml
+          - $values/analytics-svc/values-minimal/{{release}}-values-minimal.yaml
         path: Universal-chart
         repoURL: https://git.example.com/gitops/universal-chart.git
         targetRevision: main

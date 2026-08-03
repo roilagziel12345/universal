@@ -1,1 +1,1 @@
-No conflicts detected.
+[demo-config/demo-config-ci] ServiceAccount/demo-config-ci-deployer: chart supports one managed ServiceAccount per release; extra ServiceAccount emitted via extraDeploy as 'demo-config-ci-deployer'

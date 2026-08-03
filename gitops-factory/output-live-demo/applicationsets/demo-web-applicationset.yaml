@@ -8,8 +8,8 @@ metadata:
 spec:
   generators:
   - git:
-      directories:
-      - path: demo-web/values/*
+      files:
+      - path: demo-web/releases/*.yaml
       repoURL: https://git.example.com/gitops/microservices-values.git
       revision: main
   template:
@@ -19,7 +19,7 @@ spec:
       labels:
         managed-by: universal-chart-converter
         namespace: demo-web
-      name: demo-web-{{path.basename}}
+      name: demo-web-{{release}}
     spec:
       destination:
         namespace: demo-web
@@ -56,8 +56,8 @@ spec:
       sources:
       - helm:
           valueFiles:
-          - $values/demo-web/values/{{path.basename}}/{{path.basename}}-values.yaml
-          - $values/demo-web/values-minimal/{{path.basename}}/{{path.basename}}-values-minimal.yaml
+          - $values/demo-web/values/{{release}}-values.yaml
+          - $values/demo-web/values-minimal/{{release}}-values-minimal.yaml
         path: Universal-chart
         repoURL: https://git.example.com/gitops/universal-chart.git
         targetRevision: main

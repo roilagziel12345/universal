@@ -27,19 +27,18 @@ namespaces/
 ```
 output/
   <namespace>/
-    values/                            # comprehensive values — full tree
-      shared/
-        shared-values.yaml             # owns everything from shared.yaml
-      <microservice>/
-        <microservice>-values.yaml
-    values-minimal/                    # image + literal env only — PARALLEL tree, same nesting
-      shared/
-        shared-values-minimal.yaml
-      <microservice>/
-        <microservice>-values-minimal.yaml
+    values/                            # comprehensive values — FLAT files, no per-microservice folder
+      shared-values.yaml               # owns everything from shared.yaml
+      <microservice>-values.yaml
+    values-minimal/                    # image + literal env only — PARALLEL tree, same flat layout
+      shared-values-minimal.yaml
+      <microservice>-values-minimal.yaml
+    releases/                          # tiny pointer files, NOT values — see below
+      shared.yaml
+      <microservice>.yaml
   cluster-shared/
     values/
-      cluster-shared-values.yaml       # ClusterRole/ClusterRoleBinding/StorageClass/PV/SCC, deduped globally
+      cluster-shared-values.yaml       # ClusterRole/ClusterRoleBinding/StorageClass/PV/SCC/ClusterSecretStore, deduped globally
   applicationsets/
     <namespace>-applicationset.yaml    # one ApplicationSet per namespace
     cluster-shared-application.yaml    # one Application, deployed once
@@ -49,17 +48,24 @@ output/
     render_conflicts.txt               # only written if the helm-template verification step finds a real conflict
 ```
 
-Each namespace gets its own `values/` and `values-minimal/` — two **parallel**
-trees under that namespace, where every `<microservice>/` path that exists
-under one exists under the other too, just holding the comprehensive vs.
-minimal file respectively. `cluster-shared/` is a sibling of the namespace
-directories, one level up, and only has a `values/` tree (there's no minimal
-override for cluster-scoped resources).
+Each namespace gets its own `values/` and `values-minimal/` — two **parallel**,
+**flat** trees under that namespace (no subdirectory per microservice): every
+`<microservice>-values.yaml` under `values/` has a matching
+`<microservice>-values-minimal.yaml` under `values-minimal/`. `cluster-shared/`
+is a sibling of the namespace directories, one level up, and only has a
+`values/` tree (no minimal override for cluster-scoped resources).
 
-`shared/` is not special-cased in the ApplicationSet — it's just another
-directory the generator's directory-glob picks up automatically, deployed
-with `workload.type: none` so it owns ConfigMaps/Secrets/RBAC/NetworkPolicies
-without running any pods.
+`releases/<microservice>.yaml` is a tiny one-line pointer file (just
+`release: <microservice>`) — **not** a values file. It exists purely so the
+generated `ApplicationSet` can use a git **"files"** generator (matching
+`releases/*.yaml`) instead of a "directories" generator, since there's no
+longer a directory per microservice for it to enumerate. `{{release}}` in
+the `ApplicationSet` template comes from that pointer file's own content and
+is used to build the `values/{{release}}-values.yaml` /
+`values-minimal/{{release}}-values-minimal.yaml` paths. `shared` gets a
+pointer file too — it's not special-cased in the `ApplicationSet`, just
+another release that happens to use `workload.type: none` so it owns
+ConfigMaps/Secrets/RBAC/NetworkPolicies without running any pods.
 
 ## Why it's conflict-free
 
@@ -140,6 +146,12 @@ fact:
   existing singular `route:`/`service:`, for microservices that legitimately
   need more than one OpenShift Route or Service object. The singular keys are
   untouched and remain the common-case path.
+- `secretStores: {}` / `clusterSecretStores: {}` / `externalSecrets: {}` —
+  [External Secrets Operator](https://external-secrets.io) support. The
+  converter maps `SecretStore`/`ExternalSecret`/`ClusterSecretStore` objects
+  from a raw dump into these directly (they're first-class `NS_RAW_NAME_KINDS`
+  / `CLUSTER_SCOPED_KINDS` now, same dedup/collision handling as ConfigMap/
+  Secret/StorageClass) — they no longer fall through to `extraDeploy`.
 
 Everything else in the chart was already exactly what this conversion
 needed (map-based values throughout, `extraDeploy` as a raw-YAML escape
@@ -203,13 +215,13 @@ script exits non-zero.
    `--chart-path` if it lives elsewhere in that repo).
 2. Push the per-namespace directories and `cluster-shared/` from `output/` to
    the Git repo passed as `--values-repo-url`, preserving the
-   `<namespace>/values/<microservice>/` and
-   `<namespace>/values-minimal/<microservice>/` layout exactly as generated.
+   `<namespace>/values/`, `<namespace>/values-minimal/`, and
+   `<namespace>/releases/` layout exactly as generated.
 3. `kubectl apply -f output/applicationsets/` against your ArgoCD namespace.
    Each `<namespace>-applicationset.yaml` fans out into one Application per
-   discovered directory (every microservice + that namespace's `shared`);
-   `cluster-shared-application.yaml` is a single Application, applied once,
-   for the cluster-scoped leftovers.
+   discovered `releases/*.yaml` pointer file (every microservice + that
+   namespace's `shared`); `cluster-shared-application.yaml` is a single
+   Application, applied once, for the cluster-scoped leftovers.
 4. Re-run the converter whenever the raw dump changes and commit the diff —
    values files are regenerated deterministically from the source manifests,
    so treat them as generated artifacts, not something to hand-edit (the

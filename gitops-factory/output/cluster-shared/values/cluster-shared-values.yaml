@@ -5,6 +5,7 @@ workload:
 service:
   enabled: false
 
+clusterSecretStores: {}
 persistentVolumes: {}
 rbac:
   clusterRoleBindings: {}

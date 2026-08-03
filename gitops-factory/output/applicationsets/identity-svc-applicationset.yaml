@@ -8,8 +8,8 @@ metadata:
 spec:
   generators:
   - git:
-      directories:
-      - path: identity-svc/values/*
+      files:
+      - path: identity-svc/releases/*.yaml
       repoURL: https://git.example.com/gitops/microservices-values.git
       revision: main
   template:
@@ -19,7 +19,7 @@ spec:
       labels:
         managed-by: universal-chart-converter
         namespace: identity-svc
-      name: identity-svc-{{path.basename}}
+      name: identity-svc-{{release}}
     spec:
       destination:
         namespace: identity-svc
@@ -56,8 +56,8 @@ spec:
       sources:
       - helm:
           valueFiles:
-          - $values/identity-svc/values/{{path.basename}}/{{path.basename}}-values.yaml
-          - $values/identity-svc/values-minimal/{{path.basename}}/{{path.basename}}-values-minimal.yaml
+          - $values/identity-svc/values/{{release}}-values.yaml
+          - $values/identity-svc/values-minimal/{{release}}-values-minimal.yaml
         path: Universal-chart
         repoURL: https://git.example.com/gitops/universal-chart.git
         targetRevision: main

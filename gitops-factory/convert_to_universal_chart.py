@@ -43,10 +43,11 @@ Conflict-free by construction
 Several kinds render with their RAW map key as the Kubernetes resource name
 (no release-name prefix) per the Universal Chart's templates: ConfigMap,
 Secret, PersistentVolumeClaim, NetworkPolicy, Role, RoleBinding, Route (extra),
-Service (extra) and (cluster-scoped) ClusterRole, ClusterRoleBinding,
-StorageClass, PersistentVolume, SecurityContextConstraints. Those are exactly
-the ones that can collide once multiple microservices/namespaces are deployed
-as separate Helm releases. This script resolves collisions deterministically:
+Service (extra), SecretStore, ExternalSecret and (cluster-scoped) ClusterRole,
+ClusterRoleBinding, StorageClass, PersistentVolume, SecurityContextConstraints,
+ClusterSecretStore. Those are exactly the ones that can collide once multiple
+microservices/namespaces are deployed as separate Helm releases. This script
+resolves collisions deterministically:
 
   * A name first declared in shared.yaml is "owned" by the namespace-shared
     release. Any microservice that also happens to (re)declare it locally
@@ -105,7 +106,7 @@ TRANSIENT_KINDS = {
 
 CLUSTER_SCOPED_KINDS = {
     "ClusterRole", "ClusterRoleBinding", "StorageClass",
-    "PersistentVolume", "SecurityContextConstraints",
+    "PersistentVolume", "SecurityContextConstraints", "ClusterSecretStore",
 }
 
 WORKLOAD_KINDS = {"Deployment", "StatefulSet", "DaemonSet"}
@@ -116,6 +117,7 @@ WORKLOAD_KINDS = {"Deployment", "StatefulSet", "DaemonSet"}
 NS_RAW_NAME_KINDS = [
     "ConfigMap", "Secret", "PersistentVolumeClaim", "NetworkPolicy",
     "Role", "RoleBinding", "ServiceAccount", "Route", "Service",
+    "SecretStore", "ExternalSecret",
 ]
 
 AUTO_SA_SECRET_RE = re.compile(r".+-(dockercfg|token)-[a-z0-9]{5}$")
@@ -127,13 +129,21 @@ AUTO_SA_SECRET_RE = re.compile(r".+-(dockercfg|token)-[a-z0-9]{5}$")
 SHARED_DIR_NAME = "shared"
 CLUSTER_SHARED_DIR_NAME = "cluster-shared"
 
-# Output layout: <output>/<namespace>/{values,values-minimal}/<microservice>/
-# Full and minimal values live in two PARALLEL trees under each namespace
-# (same microservice nesting in both) rather than side by side in one
-# directory. cluster-shared is treated like a namespace one level up
-# (<output>/cluster-shared/values/, no values-minimal counterpart).
+# Output layout: <output>/<namespace>/{values,values-minimal}/<microservice>-values*.yaml
+# Full and minimal values are FLAT files (no per-microservice subdirectory)
+# in two PARALLEL trees under each namespace. cluster-shared is treated like
+# a namespace one level up (<output>/cluster-shared/values/, no
+# values-minimal counterpart, and no releases/ pointer since it's a single
+# release with no fan-out).
+#
+# releases/<microservice>.yaml is a tiny (one-line) pointer file — NOT a
+# values file — written purely so an ArgoCD ApplicationSet git "files"
+# generator can enumerate microservices without needing a directory per
+# release. Its only content is {release: <microservice>}; the actual values
+# live at the flat paths above.
 VALUES_DIR_NAME = "values"
 VALUES_MINIMAL_DIR_NAME = "values-minimal"
+RELEASES_DIR_NAME = "releases"
 NON_NAMESPACE_OUTPUT_DIRS = {"applicationsets", "report"}
 
 VOLATILE_ANNOTATION_PREFIXES = (
@@ -675,6 +685,65 @@ def handle_secret(doc: dict, ctx: MicroserviceContext, name: str) -> None:
     ctx.values.setdefault("secrets", {})[name] = entry
 
 
+def build_secretstore_entry(doc: dict) -> dict:
+    spec = doc.get("spec", {}) or {}
+    entry = {}
+    for k in ("provider", "retrySettings", "refreshInterval", "conditions"):
+        if spec.get(k) is not None:
+            entry[k] = spec[k]
+    ann = clean_annotations((doc.get("metadata") or {}).get("annotations"))
+    if ann:
+        entry["annotations"] = ann
+    return entry
+
+
+def handle_secretstore(doc: dict, ctx: MicroserviceContext, name: str) -> None:
+    ctx.values.setdefault("secretStores", {})[name] = build_secretstore_entry(doc)
+
+
+def build_externalsecret_entry(doc: dict, ctx: MicroserviceContext) -> dict:
+    spec = doc.get("spec", {}) or {}
+    entry = {}
+    ssr = spec.get("secretStoreRef") or {}
+    if ssr.get("name"):
+        ref_kind = ssr.get("kind", "SecretStore")
+        ref_name = ssr["name"]
+        if ref_kind == "SecretStore":
+            # Remap through the same name-claiming pass as ConfigMap/Secret/
+            # Service, in case the target SecretStore got renamed by
+            # collision resolution. ClusterSecretStore names are deduped
+            # globally without renaming, so no remap needed for that kind.
+            ref_name = ctx.name_map["SecretStore"].get(ref_name, ref_name)
+        entry["secretStoreRef"] = {"name": ref_name, "kind": ref_kind}
+    if spec.get("refreshInterval"):
+        entry["refreshInterval"] = spec["refreshInterval"]
+    target = spec.get("target") or {}
+    t = {k: target[k] for k in ("name", "creationPolicy", "deletionPolicy", "template") if target.get(k)}
+    if t:
+        entry["target"] = t
+    if spec.get("data"):
+        entry["data"] = spec["data"]
+    if spec.get("dataFrom"):
+        entry["dataFrom"] = spec["dataFrom"]
+    ann = clean_annotations((doc.get("metadata") or {}).get("annotations"))
+    if ann:
+        entry["annotations"] = ann
+    return entry
+
+
+def handle_externalsecret(doc: dict, ctx: MicroserviceContext, name: str) -> None:
+    ctx.values.setdefault("externalSecrets", {})[name] = build_externalsecret_entry(doc, ctx)
+
+
+def build_clustersecretstore_entry(doc: dict) -> dict:
+    spec = doc.get("spec", {}) or {}
+    entry = {}
+    for k in ("provider", "retrySettings", "refreshInterval", "conditions"):
+        if spec.get(k) is not None:
+            entry[k] = spec[k]
+    return entry
+
+
 def handle_pvc(doc: dict, ctx: MicroserviceContext, name: str) -> None:
     spec = doc.get("spec", {}) or {}
     entry = {"accessModes": spec.get("accessModes", ["ReadWriteOnce"])}
@@ -974,6 +1043,8 @@ def handle_cluster_scoped(doc: dict, kind: str, cluster_registry: ClusterRegistr
         cluster_values["persistentVolumes"][name] = build_pv_entry(doc)
     elif kind == "SecurityContextConstraints":
         cluster_values["scc"][name] = build_scc_entry(doc)
+    elif kind == "ClusterSecretStore":
+        cluster_values["clusterSecretStores"][name] = build_clustersecretstore_entry(doc)
 
 
 # ---------------------------------------------------------------------------
@@ -1025,6 +1096,12 @@ def build_microservice(namespace: str, ms_name: str, docs: list[dict], ns_regist
                 continue
             if ctx.claim_actions["Secret"].get(name) != "reference_shared":
                 handle_secret(doc, ctx, ctx.name_map["Secret"][name])
+        elif kind == "SecretStore":
+            if ctx.claim_actions["SecretStore"].get(name) != "reference_shared":
+                handle_secretstore(doc, ctx, ctx.name_map["SecretStore"][name])
+        elif kind == "ExternalSecret":
+            if ctx.claim_actions["ExternalSecret"].get(name) != "reference_shared":
+                handle_externalsecret(doc, ctx, ctx.name_map["ExternalSecret"][name])
         elif kind == "PersistentVolumeClaim":
             if ctx.claim_actions["PersistentVolumeClaim"].get(name) != "reference_shared":
                 handle_pvc(doc, ctx, ctx.name_map["PersistentVolumeClaim"][name])
@@ -1087,17 +1164,19 @@ def build_minimal_values(ctx: MicroserviceContext) -> dict:
 def write_microservice_output(namespace_dir: Path, ms_name: str, namespace: str,
                               ctx: MicroserviceContext) -> None:
     """
-    Full and minimal values are written under two PARALLEL trees (values/ and
-    values-minimal/) under the namespace's own output directory, rather than
-    side by side in one directory, so the two layers can live in separate
-    Git-generator globs / be reviewed or ACL'd independently. Both mirror the
-    same <microservice>/ nesting, so {{path.basename}} from an ApplicationSet's
-    directory generator over one tree resolves the matching file in the other.
+    Full and minimal values are written as FLAT files — no per-microservice
+    subdirectory — in two PARALLEL trees (values/ and values-minimal/) under
+    the namespace's own output directory. A tiny releases/<ms_name>.yaml
+    pointer file is written alongside purely so an ArgoCD ApplicationSet git
+    "files" generator can enumerate microservices without a directory per
+    release; it is not itself a values file.
     """
-    full_dir = namespace_dir / VALUES_DIR_NAME / ms_name
-    minimal_dir = namespace_dir / VALUES_MINIMAL_DIR_NAME / ms_name
-    full_dir.mkdir(parents=True, exist_ok=True)
-    minimal_dir.mkdir(parents=True, exist_ok=True)
+    values_dir = namespace_dir / VALUES_DIR_NAME
+    values_minimal_dir = namespace_dir / VALUES_MINIMAL_DIR_NAME
+    releases_dir = namespace_dir / RELEASES_DIR_NAME
+    values_dir.mkdir(parents=True, exist_ok=True)
+    values_minimal_dir.mkdir(parents=True, exist_ok=True)
+    releases_dir.mkdir(parents=True, exist_ok=True)
 
     minimal = build_minimal_values(ctx)
     header_full = (
@@ -1110,8 +1189,11 @@ def write_microservice_output(namespace_dir: Path, ms_name: str, namespace: str,
         f"# This is the client's single source of truth for day-2 tuning; safe to hand-edit\n"
         f"# and applied LAST (highest precedence) over {ms_name}-values.yaml.\n\n"
     )
-    (full_dir / f"{ms_name}-values.yaml").write_text(header_full + dump_yaml(ctx.values), encoding="utf-8")
-    (minimal_dir / f"{ms_name}-values-minimal.yaml").write_text(header_min + dump_yaml(minimal), encoding="utf-8")
+    (values_dir / f"{ms_name}-values.yaml").write_text(header_full + dump_yaml(ctx.values), encoding="utf-8")
+    (values_minimal_dir / f"{ms_name}-values-minimal.yaml").write_text(
+        header_min + dump_yaml(minimal), encoding="utf-8"
+    )
+    (releases_dir / f"{ms_name}.yaml").write_text(dump_yaml({"release": ms_name}), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -1150,6 +1232,7 @@ def build_applicationset(namespace: str, chart_repo_url: str, chart_path: str, c
                          values_repo_url: str, values_revision: str) -> dict:
     values_base = f"{namespace}/{VALUES_DIR_NAME}"
     values_minimal_base = f"{namespace}/{VALUES_MINIMAL_DIR_NAME}"
+    releases_base = f"{namespace}/{RELEASES_DIR_NAME}"
     return {
         "apiVersion": "argoproj.io/v1alpha1",
         "kind": "ApplicationSet",
@@ -1161,13 +1244,17 @@ def build_applicationset(namespace: str, chart_repo_url: str, chart_path: str, c
             },
         },
         "spec": {
+            # A "files" generator (not "directories") since values/values-minimal
+            # are flat — one entry per tiny releases/<ms>.yaml pointer file,
+            # whose only content is {release: <ms>}. {{release}} below comes
+            # from that file's own content, not from a path segment.
             "generators": [
                 {"git": {"repoURL": values_repo_url, "revision": values_revision,
-                         "directories": [{"path": f"{values_base}/*"}]}}
+                         "files": [{"path": f"{releases_base}/*.yaml"}]}}
             ],
             "template": {
                 "metadata": {
-                    "name": f"{namespace}-{{{{path.basename}}}}",
+                    "name": f"{namespace}-{{{{release}}}}",
                     "labels": {"namespace": namespace, "managed-by": "universal-chart-converter"},
                     "annotations": {"argocd.argoproj.io/sync-wave": "0"},
                 },
@@ -1180,9 +1267,8 @@ def build_applicationset(namespace: str, chart_repo_url: str, chart_path: str, c
                             "path": chart_path,
                             "helm": {
                                 "valueFiles": [
-                                    f"$values/{values_base}/{{{{path.basename}}}}/{{{{path.basename}}}}-values.yaml",
-                                    f"$values/{values_minimal_base}/{{{{path.basename}}}}/"
-                                    f"{{{{path.basename}}}}-values-minimal.yaml",
+                                    f"$values/{values_base}/{{{{release}}}}-values.yaml",
+                                    f"$values/{values_minimal_base}/{{{{release}}}}-values-minimal.yaml",
                                 ],
                             },
                         },
@@ -1252,11 +1338,11 @@ def verify_no_conflicts(chart: Path, output_dir: Path) -> tuple[int, list[str]]:
     """Renders every generated release and returns (releases_rendered, conflicts).
 
     Each top-level entry under output_dir (other than NON_NAMESPACE_OUTPUT_DIRS
-    and cluster-shared) is a namespace directory containing the two PARALLEL
-    values/ and values-minimal/ trees written by write_microservice_output —
-    full values are discovered by walking values/, and the matching minimal
-    override (if it exists) is looked up at the same <microservice>/ path
-    under values-minimal/.
+    and cluster-shared) is a namespace directory containing the two PARALLEL,
+    FLAT values/ and values-minimal/ trees written by write_microservice_output
+    — full values are discovered by globbing values/*-values.yaml, and the
+    matching minimal override (if it exists) is looked up at
+    values-minimal/<release>-values-minimal.yaml.
     """
     ns_claims: dict[str, dict[tuple[str, str], str]] = defaultdict(dict)
     cluster_claims: dict[tuple[str, str], str] = {}
@@ -1271,12 +1357,12 @@ def verify_no_conflicts(chart: Path, output_dir: Path) -> tuple[int, list[str]]:
         values_minimal_dir = ns_dir / VALUES_MINIMAL_DIR_NAME
         if not values_dir.is_dir():
             continue
-        for ms_dir in sorted(p for p in values_dir.iterdir() if p.is_dir()):
-            release = ms_dir.name
-            value_files = sorted(ms_dir.glob("*-values.yaml"))
-            minimal_ms_dir = values_minimal_dir / release
-            if minimal_ms_dir.is_dir():
-                value_files += sorted(minimal_ms_dir.glob("*-values-minimal.yaml"))
+        for vf in sorted(values_dir.glob("*-values.yaml")):
+            release = vf.name[:-len("-values.yaml")]
+            value_files = [vf]
+            minimal_vf = values_minimal_dir / f"{release}-values-minimal.yaml"
+            if minimal_vf.exists():
+                value_files.append(minimal_vf)
             docs = helm_template(chart, release, namespace, value_files)
             rendered += 1
             for doc in docs:
@@ -1350,7 +1436,8 @@ def main() -> None:
 
     cluster_registry = ClusterRegistry()
     cluster_values = {"rbac": {"clusterRoles": {}, "clusterRoleBindings": {}},
-                       "storageClasses": {}, "persistentVolumes": {}, "scc": {}}
+                       "storageClasses": {}, "persistentVolumes": {}, "scc": {},
+                       "clusterSecretStores": {}}
     all_warnings: list[str] = []
     summary = {"namespaces": {}, "totals": {"microservices": 0, "warnings": 0}}
 
@@ -1390,7 +1477,7 @@ def main() -> None:
         summary["namespaces"][namespace] = {"microservices": ms_count, "warnings": len(ns_warnings)}
         summary["totals"]["microservices"] += ms_count
 
-    if any(cluster_values[k] for k in ("storageClasses", "persistentVolumes", "scc")) or \
+    if any(cluster_values[k] for k in ("storageClasses", "persistentVolumes", "scc", "clusterSecretStores")) or \
        cluster_values["rbac"]["clusterRoles"] or cluster_values["rbac"]["clusterRoleBindings"]:
         cluster_dir = output_dir / CLUSTER_SHARED_DIR_NAME / VALUES_DIR_NAME
         cluster_dir.mkdir(parents=True, exist_ok=True)

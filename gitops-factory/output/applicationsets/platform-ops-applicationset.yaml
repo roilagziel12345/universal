@@ -8,8 +8,8 @@ metadata:
 spec:
   generators:
   - git:
-      directories:
-      - path: platform-ops/values/*
+      files:
+      - path: platform-ops/releases/*.yaml
       repoURL: https://git.example.com/gitops/microservices-values.git
       revision: main
   template:
@@ -19,7 +19,7 @@ spec:
       labels:
         managed-by: universal-chart-converter
         namespace: platform-ops
-      name: platform-ops-{{path.basename}}
+      name: platform-ops-{{release}}
     spec:
       destination:
         namespace: platform-ops
@@ -56,8 +56,8 @@ spec:
       sources:
       - helm:
           valueFiles:
-          - $values/platform-ops/values/{{path.basename}}/{{path.basename}}-values.yaml
-          - $values/platform-ops/values-minimal/{{path.basename}}/{{path.basename}}-values-minimal.yaml
+          - $values/platform-ops/values/{{release}}-values.yaml
+          - $values/platform-ops/values-minimal/{{release}}-values-minimal.yaml
         path: Universal-chart
         repoURL: https://git.example.com/gitops/universal-chart.git
         targetRevision: main
