@@ -1,0 +1,7 @@
+# Auto-generated MINIMAL override for 'demo-web-frontend' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over demo-web-frontend-values.yaml.
+
+image:
+  repository: nginx
+  tag: 1.27-alpine

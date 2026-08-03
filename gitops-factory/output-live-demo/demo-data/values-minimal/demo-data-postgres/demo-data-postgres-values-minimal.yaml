@@ -1,0 +1,14 @@
+# Auto-generated MINIMAL override for 'demo-data-postgres' — image + literal env only.
+# This is the client's single source of truth for day-2 tuning; safe to hand-edit
+# and applied LAST (highest precedence) over demo-data-postgres-values.yaml.
+
+env:
+  PGDATA:
+    value: /var/lib/postgresql/data/pgdata
+  POSTGRES_DB:
+    value: demo
+  POSTGRES_USER:
+    value: demo
+image:
+  repository: postgres
+  tag: 16-alpine

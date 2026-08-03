@@ -1,0 +1,24 @@
+{
+  "namespaces": {
+    "demo-config": {
+      "microservices": 1,
+      "warnings": 0
+    },
+    "demo-data": {
+      "microservices": 2,
+      "warnings": 0
+    },
+    "demo-jobs": {
+      "microservices": 2,
+      "warnings": 0
+    },
+    "demo-web": {
+      "microservices": 2,
+      "warnings": 0
+    }
+  },
+  "totals": {
+    "microservices": 7,
+    "warnings": 0
+  }
+}

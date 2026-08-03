@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-web-frontend
+  labels:
+    app: demo-web-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-web-frontend
+  template:
+    metadata:
+      labels:
+        app: demo-web-frontend
+    spec:
+      serviceAccountName: demo-web-frontend
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin-http
+              containerPort: 8081
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: shared-ca-bundle
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: demo-web-frontend-nginx-conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-web-frontend-nginx-conf
+data:
+  default.conf: |
+    server {
+      listen 8080;
+      location / {
+        return 200 'hello from demo-web-frontend\n';
+      }
+    }
+    server {
+      listen 8081;
+      location /stub_status {
+        stub_status;
+      }
+    }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: demo-web-frontend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-web-frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: demo-web-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-web-frontend-admin
+spec:
+  type: ClusterIP
+  selector:
+    app: demo-web-frontend
+  ports:
+    - name: admin-http
+      port: 8081
+      targetPort: admin-http
+      protocol: TCP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: demo-web-frontend
+spec:
+  to:
+    kind: Service
+    name: demo-web-frontend
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: demo-web-frontend-admin
+spec:
+  path: /stub_status
+  to:
+    kind: Service
+    name: demo-web-frontend-admin
+  port:
+    targetPort: admin-http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: demo-web-frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: demo-web-frontend
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
