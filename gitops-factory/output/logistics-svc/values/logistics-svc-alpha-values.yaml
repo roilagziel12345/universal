@@ -20,8 +20,6 @@ configMaps:
       app.kubernetes.io/name: logistics-svc-alpha-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: production
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -33,7 +31,6 @@ envFrom:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/logistics-svc-alpha
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

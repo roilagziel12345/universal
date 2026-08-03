@@ -9,9 +9,6 @@ configMaps:
     labels:
       app.kubernetes.io/name: payments-svc-gateway-config
 dnsPolicy: ClusterFirst
-env:
-  APP_MODE:
-    value: full
 envFrom:
   logging-defaults:
     type: configMapRef
@@ -31,7 +28,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/payments-svc-gateway
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

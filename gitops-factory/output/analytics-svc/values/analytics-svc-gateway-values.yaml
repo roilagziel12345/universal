@@ -9,9 +9,6 @@ configMaps:
     labels:
       app.kubernetes.io/name: analytics-svc-gateway-config
 dnsPolicy: ClusterFirst
-env:
-  APP_MODE:
-    value: full
 envFrom:
   analytics-svc-gateway-secret:
     type: secretRef
@@ -31,7 +28,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/analytics-svc-gateway
-  tag: v3.2.0
 livenessProbe:
   httpGet:
     path: /healthz

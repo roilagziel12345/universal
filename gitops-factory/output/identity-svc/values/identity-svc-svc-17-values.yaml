@@ -5,7 +5,6 @@
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/identity-svc-svc-17
-  tag: v3.2.0
 livenessProbe:
   httpGet:
     path: /healthz

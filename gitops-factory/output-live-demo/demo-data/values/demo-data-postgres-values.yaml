@@ -3,20 +3,13 @@
 # Re-run the converter to regenerate after the source manifest changes.
 
 env:
-  PGDATA:
-    value: /var/lib/postgresql/data/pgdata
-  POSTGRES_DB:
-    value: demo
   POSTGRES_PASSWORD:
     valueFrom:
       secretKeyRef:
         key: password
         name: demo-data-postgres-credentials
-  POSTGRES_USER:
-    value: demo
 image:
   repository: postgres
-  tag: 16-alpine
 livenessProbe:
   exec:
     command:

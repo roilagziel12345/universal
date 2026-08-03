@@ -20,8 +20,6 @@ configMaps:
       app.kubernetes.io/name: healthcheck-scripts
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: production
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -44,7 +42,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/platform-ops-beta
-  tag: 2.3.1
 livenessProbe:
   httpGet:
     path: /healthz

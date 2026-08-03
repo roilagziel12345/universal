@@ -9,9 +9,6 @@ configMaps:
     labels:
       app.kubernetes.io/name: logistics-svc-gateway-config
 dnsPolicy: ClusterFirst
-env:
-  APP_MODE:
-    value: full
 envFrom:
   logging-defaults:
     type: configMapRef
@@ -31,7 +28,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/logistics-svc-gateway
-  tag: 1.0.0
 livenessProbe:
   httpGet:
     path: /healthz

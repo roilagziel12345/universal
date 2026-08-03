@@ -9,9 +9,6 @@ configMaps:
     labels:
       app.kubernetes.io/name: platform-ops-gateway-config
 dnsPolicy: ClusterFirst
-env:
-  APP_MODE:
-    value: full
 envFrom:
   logging-defaults:
     type: configMapRef
@@ -31,7 +28,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/platform-ops-gateway
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

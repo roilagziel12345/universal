@@ -5,7 +5,6 @@
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/payments-svc-db-1
-  tag: 2.3.1
 livenessProbe:
   httpGet:
     path: /healthz

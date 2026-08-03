@@ -4,7 +4,6 @@
 
 image:
   repository: traefik/whoami
-  tag: v1.10
 ports:
   http:
     containerPort: 80

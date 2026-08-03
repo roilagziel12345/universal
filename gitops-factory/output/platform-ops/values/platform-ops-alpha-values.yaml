@@ -20,8 +20,6 @@ configMaps:
       app.kubernetes.io/name: platform-ops-alpha-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: staging
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -44,7 +42,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/platform-ops-alpha
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

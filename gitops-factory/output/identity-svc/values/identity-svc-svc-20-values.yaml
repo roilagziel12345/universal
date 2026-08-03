@@ -11,8 +11,6 @@ configMaps:
       app.kubernetes.io/name: identity-svc-svc-20-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: production
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -24,7 +22,6 @@ envFrom:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/identity-svc-svc-20
-  tag: v3.2.0
 livenessProbe:
   httpGet:
     path: /healthz

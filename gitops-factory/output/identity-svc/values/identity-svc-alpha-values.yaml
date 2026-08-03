@@ -20,8 +20,6 @@ configMaps:
       app.kubernetes.io/name: identity-svc-alpha-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: staging
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -33,7 +31,6 @@ envFrom:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/identity-svc-alpha
-  tag: v3.2.0
 livenessProbe:
   httpGet:
     path: /healthz

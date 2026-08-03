@@ -11,8 +11,6 @@ configMaps:
       app.kubernetes.io/name: analytics-svc-svc-13-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: staging
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -35,7 +33,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/analytics-svc-svc-13
-  tag: 2.3.1
 livenessProbe:
   httpGet:
     path: /healthz

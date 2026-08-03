@@ -17,8 +17,6 @@ configMaps:
       app.kubernetes.io/name: logistics-svc-billing-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: production
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -30,7 +28,6 @@ envFrom:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/logistics-svc-billing
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

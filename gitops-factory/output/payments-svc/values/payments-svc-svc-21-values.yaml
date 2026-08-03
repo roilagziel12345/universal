@@ -11,8 +11,6 @@ configMaps:
       app.kubernetes.io/name: payments-svc-svc-21-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: production
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -24,7 +22,6 @@ envFrom:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/payments-svc-svc-21
-  tag: 1.0.0
 livenessProbe:
   httpGet:
     path: /healthz

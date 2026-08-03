@@ -11,8 +11,6 @@ configMaps:
       app.kubernetes.io/name: analytics-svc-notify-2-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: production
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -24,7 +22,6 @@ envFrom:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/analytics-svc-notify-2
-  tag: 1.0.0
 livenessProbe:
   httpGet:
     path: /healthz

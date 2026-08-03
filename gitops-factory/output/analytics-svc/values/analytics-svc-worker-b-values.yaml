@@ -6,7 +6,6 @@ dnsPolicy: ClusterFirst
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/analytics-svc-worker-b
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

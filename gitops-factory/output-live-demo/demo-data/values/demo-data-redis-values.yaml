@@ -4,7 +4,6 @@
 
 image:
   repository: redis
-  tag: 7-alpine
 ports:
   redis:
     containerPort: 6379

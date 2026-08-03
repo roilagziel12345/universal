@@ -10,8 +10,11 @@ Converts raw Kubernetes/OpenShift manifests dumped per-namespace/per-microservic
 into:
 
     1. Two Universal Helm Chart values files PER microservice:
-         <microservice>-values.yaml           (comprehensive)
-         <microservice>-values-minimal.yaml   (image + literal env only)
+         <microservice>-values.yaml           (comprehensive - everything
+                                                EXCEPT image tag & literal env)
+         <microservice>-values-minimal.yaml   (image tag + literal env ONLY -
+                                                exclusively here, not duplicated
+                                                in the comprehensive file)
 
     2. One namespace-shared "release" (workload.type: none) that owns any
        resources living in shared.yaml, so they are never double-declared
@@ -345,6 +348,12 @@ class MicroserviceContext:
     primary_sa_set: bool = False
     primary_route_set: bool = False
     primary_service_set: bool = False
+    # Full (untrimmed) image/env, kept only so build_minimal_values can pull
+    # the tag / literal env vars out of them — ctx.values["image"]/["env"]
+    # themselves deliberately EXCLUDE tag / literal env (see
+    # handle_main_container) so those aren't duplicated in both files.
+    full_image: dict = field(default_factory=dict)
+    full_env: dict = field(default_factory=dict)
 
 
 def env_list_to_map(env_list) -> dict:
@@ -435,7 +444,11 @@ def handle_main_container(c: dict, ctx: MicroserviceContext) -> None:
         image["tag"] = tag
     if c.get("imagePullPolicy"):
         image["pullPolicy"] = c["imagePullPolicy"]
-    v["image"] = image
+    ctx.full_image = image
+    # The comprehensive values file omits the tag — that's the minimal
+    # override's job (see build_minimal_values), so a day-2 tag bump only
+    # ever touches *-values-minimal.yaml, not the auto-generated file.
+    v["image"] = {k: val for k, val in image.items() if k != "tag"}
 
     for k in ("command", "args", "workingDir"):
         if c.get(k):
@@ -443,7 +456,15 @@ def handle_main_container(c: dict, ctx: MicroserviceContext) -> None:
     if c.get("ports"):
         v["ports"] = ports_list_to_map(c["ports"])
     if c.get("env"):
-        v["env"] = remap_env(env_list_to_map(c["env"]), ctx)
+        full_env = remap_env(env_list_to_map(c["env"]), ctx)
+        ctx.full_env = full_env
+        # Same reasoning as image tag: literal-value env vars are the
+        # minimal override's job. valueFrom-based env (ConfigMap/Secret/
+        # field/resource refs) stays here — it's structural wiring, not
+        # day-2 tuning, and has nowhere else to live.
+        structural_env = {k: val for k, val in full_env.items() if "value" not in val or "valueFrom" in val}
+        if structural_env:
+            v["env"] = structural_env
     if c.get("envFrom"):
         v["envFrom"] = remap_envfrom(envfrom_list_to_map(c["envFrom"]), ctx)
     if c.get("resources"):
@@ -1149,13 +1170,10 @@ def build_microservice(namespace: str, ms_name: str, docs: list[dict], ns_regist
 
 def build_minimal_values(ctx: MicroserviceContext) -> dict:
     minimal: dict = {}
-    image = ctx.values.get("image")
-    if image:
-        img = {k: v for k, v in image.items() if k in ("repository", "tag")}
-        if img:
-            minimal["image"] = img
-    env = ctx.values.get("env") or {}
-    literal_env = {k: v for k, v in env.items() if "value" in v and "valueFrom" not in v}
+    img = {k: v for k, v in ctx.full_image.items() if k in ("repository", "tag")}
+    if img:
+        minimal["image"] = img
+    literal_env = {k: v for k, v in ctx.full_env.items() if "value" in v and "valueFrom" not in v}
     if literal_env:
         minimal["env"] = literal_env
     return minimal

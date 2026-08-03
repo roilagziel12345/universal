@@ -11,8 +11,6 @@ configMaps:
       app.kubernetes.io/name: analytics-svc-svc-09-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: production
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -35,7 +33,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/analytics-svc-svc-09
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

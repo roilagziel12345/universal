@@ -17,8 +17,6 @@ configMaps:
       app.kubernetes.io/name: identity-svc-billing-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: staging
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -41,7 +39,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/identity-svc-billing
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

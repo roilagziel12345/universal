@@ -9,9 +9,6 @@ configMaps:
     labels:
       app.kubernetes.io/name: identity-svc-gateway-config
 dnsPolicy: ClusterFirst
-env:
-  APP_MODE:
-    value: full
 envFrom:
   identity-svc-gateway-secret:
     type: secretRef
@@ -31,7 +28,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/identity-svc-gateway
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

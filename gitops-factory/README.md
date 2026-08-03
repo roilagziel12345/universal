@@ -55,6 +55,14 @@ Each namespace gets its own `values/` and `values-minimal/` — two **parallel**
 is a sibling of the namespace directories, one level up, and only has a
 `values/` tree (no minimal override for cluster-scoped resources).
 
+The image tag and any literal-value (`value:`, not `valueFrom:`) env vars live
+**exclusively** in `*-values-minimal.yaml` — the comprehensive `*-values.yaml`
+omits them rather than duplicating them, so a day-2 image bump or config
+tweak only ever touches the minimal file. `image.repository`, `pullPolicy`,
+and any `valueFrom`-based env (ConfigMap/Secret/field refs — structural
+wiring, not day-2 tuning) stay in the comprehensive file, since minimal has
+nowhere else to apply them from.
+
 `releases/<microservice>.yaml` is a tiny one-line pointer file (just
 `release: <microservice>`) — **not** a values file. It exists purely so the
 generated `ApplicationSet` can use a git **"files"** generator (matching

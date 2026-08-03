@@ -54,7 +54,6 @@ dnsPolicy: ClusterFirst
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/payments-svc-batch-3
-  tag: v3.2.0
 jobs:
   payments-svc-batch-3-backup-29384756:
     backoffLimit: 3

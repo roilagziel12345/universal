@@ -16,8 +16,6 @@ configMaps:
       app.kubernetes.io/name: logistics-svc-checkout-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: staging
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -29,7 +27,6 @@ envFrom:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/logistics-svc-checkout
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

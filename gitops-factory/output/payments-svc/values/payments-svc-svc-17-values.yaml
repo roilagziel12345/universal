@@ -11,8 +11,6 @@ configMaps:
       app.kubernetes.io/name: payments-svc-svc-17-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: staging
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -35,7 +33,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/payments-svc-svc-17
-  tag: latest
 livenessProbe:
   httpGet:
     path: /healthz

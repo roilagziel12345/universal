@@ -23,7 +23,6 @@ hpa:
   minReplicas: 2
 image:
   repository: nginx
-  tag: 1.27-alpine
 livenessProbe:
   httpGet:
     path: /

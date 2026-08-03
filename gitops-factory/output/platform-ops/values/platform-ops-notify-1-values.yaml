@@ -11,8 +11,6 @@ configMaps:
       app.kubernetes.io/name: platform-ops-notify-1-config
 dnsPolicy: ClusterFirst
 env:
-  APP_ENV:
-    value: staging
   LOG_LEVEL:
     valueFrom:
       configMapKeyRef:
@@ -35,7 +33,6 @@ hpa:
 image:
   pullPolicy: IfNotPresent
   repository: registry.example.com/platform-ops-notify-1
-  tag: 1.0.0
 livenessProbe:
   httpGet:
     path: /healthz
