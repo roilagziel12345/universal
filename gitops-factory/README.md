@@ -26,15 +26,19 @@ namespaces/
 
 ```
 output/
-  gitops-values/
-    <namespace>/
+  <namespace>/
+    values/                            # comprehensive values — full tree
       shared/
-        shared-values.yaml            # owns everything from shared.yaml
+        shared-values.yaml             # owns everything from shared.yaml
+      <microservice>/
+        <microservice>-values.yaml
+    values-minimal/                    # image + literal env only — PARALLEL tree, same nesting
+      shared/
         shared-values-minimal.yaml
       <microservice>/
-        <microservice>-values.yaml           # comprehensive
-        <microservice>-values-minimal.yaml   # image + literal env only
-    cluster-shared/
+        <microservice>-values-minimal.yaml
+  cluster-shared/
+    values/
       cluster-shared-values.yaml       # ClusterRole/ClusterRoleBinding/StorageClass/PV/SCC, deduped globally
   applicationsets/
     <namespace>-applicationset.yaml    # one ApplicationSet per namespace
@@ -42,7 +46,15 @@ output/
   report/
     conversion_report.json
     conflicts_and_warnings.txt         # every auto-resolved naming conflict, explained
+    render_conflicts.txt               # only written if the helm-template verification step finds a real conflict
 ```
+
+Each namespace gets its own `values/` and `values-minimal/` — two **parallel**
+trees under that namespace, where every `<microservice>/` path that exists
+under one exists under the other too, just holding the comprehensive vs.
+minimal file respectively. `cluster-shared/` is a sibling of the namespace
+directories, one level up, and only has a `values/` tree (there's no minimal
+override for cluster-scoped resources).
 
 `shared/` is not special-cased in the ApplicationSet — it's just another
 directory the generator's directory-glob picks up automatically, deployed
@@ -164,7 +176,8 @@ Expected output:
 ```
 Converted 250 microservices across 5 namespaces.
 Auto-resolved conflicts / warnings: 51 (see output/report/conflicts_and_warnings.txt)
-Values written under:        output/gitops-values
+Values written under:          output/<namespace>/values/
+Minimal values written under:  output/<namespace>/values-minimal/
 ApplicationSets written under: output/applicationsets
 
 Verifying against ../Universal-chart — rendering every release with `helm template`...
@@ -188,9 +201,10 @@ script exits non-zero.
 1. Push the `Universal-chart/` directory to the Git repo passed as
    `--chart-repo-url` (path defaults to `Universal-chart`, override with
    `--chart-path` if it lives elsewhere in that repo).
-2. Push `output/gitops-values/` to the Git repo passed as `--values-repo-url`,
-   preserving the `gitops-values/<namespace>/<microservice>/` layout exactly
-   as generated.
+2. Push the per-namespace directories and `cluster-shared/` from `output/` to
+   the Git repo passed as `--values-repo-url`, preserving the
+   `<namespace>/values/<microservice>/` and
+   `<namespace>/values-minimal/<microservice>/` layout exactly as generated.
 3. `kubectl apply -f output/applicationsets/` against your ArgoCD namespace.
    Each `<namespace>-applicationset.yaml` fans out into one Application per
    discovered directory (every microservice + that namespace's `shared`);
@@ -295,5 +309,5 @@ real app follows the exact same input contract, just with real data:
 8. **Day 2**: whenever the source manifests change (a new microservice added to
    the namespace, a ConfigMap key changed upstream), re-run the converter and
    commit the diff. The values files are deterministic output — the git diff on
-   `output/gitops-values/` is your review surface for "what actually changed",
-   the same way you'd review a `terraform plan`.
+   `output/` is your review surface for "what actually changed", the same way
+   you'd review a `terraform plan`.

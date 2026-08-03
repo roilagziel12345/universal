@@ -11,7 +11,7 @@ spec:
   sources:
   - helm:
       valueFiles:
-      - $values/gitops-values/cluster-shared/cluster-shared-values.yaml
+      - $values/cluster-shared/values/cluster-shared-values.yaml
     path: Universal-chart
     repoURL: https://git.example.com/gitops/universal-chart.git
     targetRevision: main

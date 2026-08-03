@@ -9,7 +9,7 @@ spec:
   generators:
   - git:
       directories:
-      - path: gitops-values/payments-svc/*
+      - path: payments-svc/values/*
       repoURL: https://git.example.com/gitops/microservices-values.git
       revision: main
   template:
@@ -56,8 +56,8 @@ spec:
       sources:
       - helm:
           valueFiles:
-          - $values/gitops-values/payments-svc/{{path.basename}}/{{path.basename}}-values.yaml
-          - $values/gitops-values/payments-svc/{{path.basename}}/{{path.basename}}-values-minimal.yaml
+          - $values/payments-svc/values/{{path.basename}}/{{path.basename}}-values.yaml
+          - $values/payments-svc/values-minimal/{{path.basename}}/{{path.basename}}-values-minimal.yaml
         path: Universal-chart
         repoURL: https://git.example.com/gitops/universal-chart.git
         targetRevision: main
