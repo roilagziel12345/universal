@@ -8,11 +8,7 @@ ports:
   http:
     containerPort: 80
 readinessProbe:
-  httpGet:
-    path: /
-    port: http
   initialDelaySeconds: 3
-  periodSeconds: 10
 replicaCount: 1
 resources:
   limits:
@@ -21,15 +17,3 @@ resources:
   requests:
     cpu: 25m
     memory: 32Mi
-route:
-  enabled: true
-  targetPort: http
-service:
-  enabled: true
-  ports:
-    http:
-      port: 80
-      targetPort: http
-  type: ClusterIP
-workload:
-  type: deployment

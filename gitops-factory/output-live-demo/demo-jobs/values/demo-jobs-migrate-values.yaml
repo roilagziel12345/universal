@@ -21,7 +21,3 @@ jobs:
         cpu: 10m
         memory: 16Mi
     restartPolicy: Never
-service:
-  enabled: false
-workload:
-  type: none

@@ -56,6 +56,8 @@ spec:
       sources:
       - helm:
           valueFiles:
+          - $values/defaults.yaml
+          - $values/logistics-svc/defaults.yaml
           - $values/logistics-svc/values/{{release}}-values.yaml
           - $values/logistics-svc/values-minimal/{{release}}-values-minimal.yaml
         path: Universal-chart

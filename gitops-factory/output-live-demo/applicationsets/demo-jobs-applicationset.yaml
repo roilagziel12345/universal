@@ -56,6 +56,8 @@ spec:
       sources:
       - helm:
           valueFiles:
+          - $values/defaults.yaml
+          - $values/demo-jobs/defaults.yaml
           - $values/demo-jobs/values/{{release}}-values.yaml
           - $values/demo-jobs/values-minimal/{{release}}-values-minimal.yaml
         path: Universal-chart

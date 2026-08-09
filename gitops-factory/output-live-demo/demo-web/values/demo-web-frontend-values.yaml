@@ -37,11 +37,7 @@ ports:
     containerPort: 8080
     protocol: TCP
 readinessProbe:
-  httpGet:
-    path: /
-    port: http
   initialDelaySeconds: 5
-  periodSeconds: 10
 replicaCount: 2
 resources:
   limits:
@@ -51,8 +47,6 @@ resources:
     cpu: 50m
     memory: 64Mi
 route:
-  enabled: true
-  targetPort: http
   tls:
     insecureEdgeTerminationPolicy: Redirect
     termination: edge
@@ -63,13 +57,9 @@ routes:
     serviceName: demo-web-frontend-admin
     targetPort: admin-http
 service:
-  enabled: true
   ports:
     http:
-      port: 80
       protocol: TCP
-      targetPort: http
-  type: ClusterIP
 serviceAccount:
   create: true
   name: demo-web-frontend
@@ -91,5 +81,3 @@ volumes:
   nginx-conf:
     configMap:
       name: demo-web-frontend-nginx-conf
-workload:
-  type: deployment

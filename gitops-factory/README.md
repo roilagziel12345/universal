@@ -26,7 +26,10 @@ namespaces/
 
 ```
 output/
+  defaults.yaml                        # GLOBAL defaults — identical across EVERY microservice in the run
   <namespace>/
+    defaults.yaml                      # NAMESPACE defaults — identical across this namespace's microservices,
+                                        # beyond what the global layer already covers
     values/                            # comprehensive values — FLAT files, no per-microservice folder
       shared-values.yaml               # owns everything from shared.yaml
       <microservice>-values.yaml
@@ -74,6 +77,55 @@ is used to build the `values/{{release}}-values.yaml` /
 pointer file too — it's not special-cased in the `ApplicationSet`, just
 another release that happens to use `workload.type: none` so it owns
 ConfigMaps/Secrets/RBAC/NetworkPolicies without running any pods.
+
+## defaults.yaml — factoring out what's common
+
+This is the same "each layer only has what's different" idea already
+documented in [`Universal-chart/examples/gitops/STRUCTURE.md`](../Universal-chart/examples/gitops/STRUCTURE.md)
+(`_base/defaults.yaml`) — except computed automatically from the converted
+values instead of hand-written, which matters once you have real scale (say
+100 similar microservices in one namespace): every one of those files would
+otherwise repeat the same `resources`/`probes`/`securityContext` boilerplate
+in full, making it hard to see what actually makes one microservice different
+from another, or one namespace different from the next.
+
+**The algorithm** (`common_subtree` / `subtract_defaults` in the converter),
+run in two passes:
+
+1. **Global pass**: across every regular microservice in the ENTIRE run
+   (all namespaces), recursively find the key/value pairs that are
+   byte-identical in literally every one of them. That becomes
+   `output/defaults.yaml`.
+2. **Namespace pass**: subtract the global layer from each microservice's
+   values first, then repeat the same "what's identical across every
+   microservice in this namespace" computation on what's left. That becomes
+   `output/<namespace>/defaults.yaml`.
+3. Whatever survives in defaults is then subtracted from every individual
+   `<microservice>-values.yaml` — so nothing is ever duplicated between a
+   defaults file and a microservice file that already gets it from there.
+
+**Why this is safe to do automatically**: a key is only ever promoted to a
+defaults file if it is *present, with the exact same value*, in **every**
+microservice being compared — never a majority, never "most of them." Helm
+merges maps, so if defaults.yaml supplied a value that some microservice
+never actually had, that microservice would silently inherit it. Requiring
+100% agreement makes that impossible: nothing a microservice didn't already
+effectively have gets added back by a lower-precedence file. Comparison is
+recursive per-key, not whole-block — `resources.requests.cpu` can be
+promoted even if `resources.limits` differs per microservice, and lists/
+scalars must match exactly (never partially merged).
+
+The `shared` release is excluded from *computing* defaults (it's
+config/RBAC-only — a different shape entirely from a normal microservice's
+values) but still has both defaults layers applied like everything else, so
+it benefits too if it happens to share something.
+
+Layering order in the generated `ApplicationSet` (lowest → highest
+precedence): `defaults.yaml` → `<namespace>/defaults.yaml` →
+`<microservice>-values.yaml` → `<microservice>-values-minimal.yaml`.
+
+Both defaults files are regenerated fresh on every converter run — like the
+values files, treat them as generated output, not something to hand-edit.
 
 ## Why it's conflict-free
 
@@ -221,10 +273,11 @@ script exits non-zero.
 1. Push the `Universal-chart/` directory to the Git repo passed as
    `--chart-repo-url` (path defaults to `Universal-chart`, override with
    `--chart-path` if it lives elsewhere in that repo).
-2. Push the per-namespace directories and `cluster-shared/` from `output/` to
-   the Git repo passed as `--values-repo-url`, preserving the
-   `<namespace>/values/`, `<namespace>/values-minimal/`, and
-   `<namespace>/releases/` layout exactly as generated.
+2. Push everything under `output/` — the top-level `defaults.yaml`, the
+   per-namespace directories (`<namespace>/defaults.yaml`,
+   `<namespace>/values/`, `<namespace>/values-minimal/`,
+   `<namespace>/releases/`), and `cluster-shared/` — to the Git repo passed
+   as `--values-repo-url`, preserving the layout exactly as generated.
 3. `kubectl apply -f output/applicationsets/` against your ArgoCD namespace.
    Each `<namespace>-applicationset.yaml` fans out into one Application per
    discovered `releases/*.yaml` pointer file (every microservice + that
@@ -318,6 +371,11 @@ real app follows the exact same input contract, just with real data:
      override layer (image tag + literal env vars only) — this is where day-2
      changes belong (e.g. a config value a developer needs to tweak without
      re-running the whole conversion).
+   - `defaults.yaml` (global) and `<namespace>/defaults.yaml` are also
+     auto-generated / do-not-edit — see [defaults.yaml — factoring out
+     what's common](#defaultsyaml--factoring-out-whats-common). If a value
+     you expected in a microservice's own file isn't there, check both
+     defaults files before assuming it's missing.
    - If the app needs something the converter has no first-class handling for
      (a CRD, an unusual resource kind), it'll have been passed through as raw
      YAML under `extraDeploy` with a warning — confirm that's actually fine

@@ -144,9 +144,20 @@ CLUSTER_SHARED_DIR_NAME = "cluster-shared"
 # generator can enumerate microservices without needing a directory per
 # release. Its only content is {release: <microservice>}; the actual values
 # live at the flat paths above.
+#
+# defaults.yaml (one per namespace, sibling of values/values-minimal) holds
+# whatever is byte-identical across EVERY regular microservice's values in
+# that namespace, and is stripped out of each individual -values.yaml —
+# same "each layer only has what's different" idea as
+# examples/gitops/STRUCTURE.md's _base/defaults.yaml, just computed
+# automatically instead of hand-written. It's applied FIRST (lowest
+# precedence) by the ApplicationSet, so it's always safe: a microservice
+# that never had a given key is never given it by defaults, since only
+# keys present with an IDENTICAL value in every microservice qualify.
 VALUES_DIR_NAME = "values"
 VALUES_MINIMAL_DIR_NAME = "values-minimal"
 RELEASES_DIR_NAME = "releases"
+DEFAULTS_FILE_NAME = "defaults.yaml"
 NON_NAMESPACE_OUTPUT_DIRS = {"applicationsets", "report"}
 
 VOLATILE_ANNOTATION_PREFIXES = (
@@ -1179,6 +1190,67 @@ def build_minimal_values(ctx: MicroserviceContext) -> dict:
     return minimal
 
 
+# ---------------------------------------------------------------------------
+# defaults.yaml generation — see the module docstring and the comment above
+# DEFAULTS_FILE_NAME for the full rationale.
+# ---------------------------------------------------------------------------
+
+def common_subtree(dicts: list[dict]) -> dict:
+    """
+    Recursively finds the key/value pairs that are PRESENT, with the exact
+    same value, in EVERY dict in `dicts`. Partial agreement (some but not
+    all dicts share it) is deliberately excluded — Helm merges maps, so
+    promoting a key to a lower-precedence defaults file that only SOME
+    releases actually had would silently inject it into the releases that
+    never declared it, changing their behavior. Nested dicts are compared
+    key-by-key (recursively) rather than as opaque blobs, so e.g.
+    `resources.requests.cpu` can be promoted even if `resources.limits`
+    differs per release. Lists and scalars must match exactly (by value) —
+    lists are never partially merged.
+    """
+    if len(dicts) < 2:
+        return {}
+    common: dict = {}
+    first = dicts[0]
+    rest = dicts[1:]
+    for key, val in first.items():
+        if not all(key in d for d in rest):
+            continue
+        others = [d[key] for d in rest]
+        if isinstance(val, dict) and all(isinstance(o, dict) for o in others):
+            sub = common_subtree([val] + others)
+            if sub:
+                common[key] = sub
+        elif all(o == val for o in others):
+            common[key] = val
+    return common
+
+
+def subtract_defaults(values: dict, defaults: dict) -> dict:
+    """
+    The inverse of common_subtree: removes anything from `values` that is
+    identical to `defaults` at the same path, recursively, leaving exactly
+    the per-release delta. Safe by construction — since defaults.yaml is
+    always layered underneath this file, whatever's removed here is still
+    supplied from there.
+    """
+    if not defaults:
+        return values
+    out: dict = {}
+    for key, val in values.items():
+        if key not in defaults:
+            out[key] = val
+            continue
+        dval = defaults[key]
+        if isinstance(val, dict) and isinstance(dval, dict):
+            sub = subtract_defaults(val, dval)
+            if sub:
+                out[key] = sub
+        elif val != dval:
+            out[key] = val
+    return out
+
+
 def write_microservice_output(namespace_dir: Path, ms_name: str, namespace: str,
                               ctx: MicroserviceContext) -> None:
     """
@@ -1284,7 +1356,13 @@ def build_applicationset(namespace: str, chart_repo_url: str, chart_path: str, c
                             "targetRevision": chart_revision,
                             "path": chart_path,
                             "helm": {
+                                # Layered low -> high precedence: global defaults,
+                                # then this namespace's defaults, then this
+                                # release's own comprehensive file, then its
+                                # minimal (hand-editable) override.
                                 "valueFiles": [
+                                    f"$values/{DEFAULTS_FILE_NAME}",
+                                    f"$values/{namespace}/{DEFAULTS_FILE_NAME}",
                                     f"$values/{values_base}/{{{{release}}}}-values.yaml",
                                     f"$values/{values_minimal_base}/{{{{release}}}}-values-minimal.yaml",
                                 ],
@@ -1367,6 +1445,7 @@ def verify_no_conflicts(chart: Path, output_dir: Path) -> tuple[int, list[str]]:
     conflicts: list[str] = []
     rendered = 0
 
+    global_defaults_vf = output_dir / DEFAULTS_FILE_NAME
     for ns_dir in sorted(p for p in output_dir.iterdir() if p.is_dir()):
         namespace = ns_dir.name
         if namespace == CLUSTER_SHARED_DIR_NAME or namespace in NON_NAMESPACE_OUTPUT_DIRS:
@@ -1375,9 +1454,11 @@ def verify_no_conflicts(chart: Path, output_dir: Path) -> tuple[int, list[str]]:
         values_minimal_dir = ns_dir / VALUES_MINIMAL_DIR_NAME
         if not values_dir.is_dir():
             continue
+        ns_defaults_vf = ns_dir / DEFAULTS_FILE_NAME
+        base_value_files = [f for f in (global_defaults_vf, ns_defaults_vf) if f.exists()]
         for vf in sorted(values_dir.glob("*-values.yaml")):
             release = vf.name[:-len("-values.yaml")]
-            value_files = [vf]
+            value_files = base_value_files + [vf]
             minimal_vf = values_minimal_dir / f"{release}-values-minimal.yaml"
             if minimal_vf.exists():
                 value_files.append(minimal_vf)
@@ -1460,20 +1541,28 @@ def main() -> None:
     summary = {"namespaces": {}, "totals": {"microservices": 0, "warnings": 0}}
 
     namespace_dirs = sorted(p for p in input_dir.iterdir() if p.is_dir())
+
+    # Pass 1 — build every microservice's values (in memory, nothing written
+    # yet). Needed up front because defaults.yaml is computed FROM the full
+    # set of already-built values, both globally and per namespace.
+    per_namespace_ms: dict[str, list[tuple[str, MicroserviceContext]]] = {}
+    per_namespace_shared: dict[str, MicroserviceContext] = {}
+    per_namespace_warnings: dict[str, list[str]] = {}
+
     for ns_dir in namespace_dirs:
         namespace = ns_dir.name
-        out_ns_dir = output_dir / namespace
         ns_registry = NamespaceRegistry(namespace)
         ns_warnings: list[str] = []
-        ms_count = 0
 
         shared_path = ns_dir / "shared.yaml"
         if shared_path.exists():
             shared_docs = filter_transient([sanitize_object(d) for d in load_multidoc(shared_path)])
-            shared_ctx = build_microservice(namespace, SHARED_DIR_NAME, shared_docs, ns_registry, cluster_registry,
-                                            cluster_values, ns_warnings, owner_label="_shared")
-            write_microservice_output(out_ns_dir, SHARED_DIR_NAME, namespace, shared_ctx)
+            per_namespace_shared[namespace] = build_microservice(
+                namespace, SHARED_DIR_NAME, shared_docs, ns_registry, cluster_registry,
+                cluster_values, ns_warnings, owner_label="_shared",
+            )
 
+        ms_contexts: list[tuple[str, MicroserviceContext]] = []
         for ms_file in sorted(ns_dir.glob("*.yaml")):
             if ms_file.name == "shared.yaml":
                 continue
@@ -1481,10 +1570,70 @@ def main() -> None:
             docs = filter_transient([sanitize_object(d) for d in load_multidoc(ms_file)])
             ctx = build_microservice(namespace, ms_name, docs, ns_registry, cluster_registry, cluster_values,
                                      ns_warnings, owner_label=ms_name)
-            write_microservice_output(out_ns_dir, ms_name, namespace, ctx)
-            ms_count += 1
+            ms_contexts.append((ms_name, ctx))
             all_warnings.extend(f"[{namespace}/{ms_name}] {w}" for w in ctx.warnings)
 
+        per_namespace_ms[namespace] = ms_contexts
+        per_namespace_warnings[namespace] = ns_warnings
+
+    # Pass 2 — GLOBAL defaults.yaml: whatever's identical across EVERY
+    # regular microservice in the ENTIRE run, regardless of namespace. The
+    # "shared" release is excluded from the pool (config/RBAC-only, a
+    # different shape entirely from a normal microservice) but still gets
+    # this layer applied like everything else.
+    all_ms_values = [ctx.values for ms_list in per_namespace_ms.values() for _, ctx in ms_list]
+    global_defaults = common_subtree(all_ms_values)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    header_global_defaults = (
+        "# Auto-generated by convert_to_universal_chart.py — DO NOT EDIT BY HAND.\n"
+        "# GLOBAL defaults: values identical across EVERY microservice in this ENTIRE\n"
+        "# run, regardless of namespace. Applied FIRST (lowest precedence) — beneath\n"
+        "# each namespace's own defaults.yaml, which is beneath each microservice's\n"
+        "# own -values.yaml, which is beneath its -values-minimal.yaml.\n"
+        "# Re-run the converter to regenerate after the source manifests change.\n\n"
+    )
+    (output_dir / DEFAULTS_FILE_NAME).write_text(
+        header_global_defaults + dump_yaml(global_defaults), encoding="utf-8"
+    )
+
+    # Pass 3 — per namespace: subtract the global layer, compute what's LEFT
+    # that's still common within just this namespace, subtract THAT too, then
+    # write everything (only the true per-microservice delta remains).
+    for ns_dir in namespace_dirs:
+        namespace = ns_dir.name
+        out_ns_dir = output_dir / namespace
+        ms_contexts = per_namespace_ms.get(namespace, [])
+        ns_warnings = per_namespace_warnings.get(namespace, [])
+
+        for _, ctx in ms_contexts:
+            ctx.values = subtract_defaults(ctx.values, global_defaults)
+        namespace_defaults = common_subtree([ctx.values for _, ctx in ms_contexts])
+
+        out_ns_dir.mkdir(parents=True, exist_ok=True)
+        header_ns_defaults = (
+            "# Auto-generated by convert_to_universal_chart.py — DO NOT EDIT BY HAND.\n"
+            f"# Namespace defaults for '{namespace}': values identical across every\n"
+            "# microservice in THIS namespace, beyond what's already covered by the\n"
+            "# global ../defaults.yaml. Applied after the global layer, before each\n"
+            "# microservice's own -values.yaml.\n"
+            "# Re-run the converter to regenerate after the source manifests change.\n\n"
+        )
+        (out_ns_dir / DEFAULTS_FILE_NAME).write_text(
+            header_ns_defaults + dump_yaml(namespace_defaults), encoding="utf-8"
+        )
+
+        for ms_name, ctx in ms_contexts:
+            ctx.values = subtract_defaults(ctx.values, namespace_defaults)
+            write_microservice_output(out_ns_dir, ms_name, namespace, ctx)
+
+        shared_ctx = per_namespace_shared.get(namespace)
+        if shared_ctx is not None:
+            shared_ctx.values = subtract_defaults(shared_ctx.values, global_defaults)
+            shared_ctx.values = subtract_defaults(shared_ctx.values, namespace_defaults)
+            write_microservice_output(out_ns_dir, SHARED_DIR_NAME, namespace, shared_ctx)
+
+        ms_count = len(ms_contexts)
         all_warnings.extend(f"[{namespace}] {w}" for w in ns_warnings)
 
         appset = build_applicationset(namespace, args.chart_repo_url, args.chart_path, args.chart_revision,

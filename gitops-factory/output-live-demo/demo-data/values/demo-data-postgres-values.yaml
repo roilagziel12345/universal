@@ -28,8 +28,6 @@ readinessProbe:
     - -U
     - demo
   initialDelaySeconds: 15
-  periodSeconds: 10
-replicaCount: 1
 resources:
   limits:
     cpu: 500m
@@ -44,12 +42,10 @@ secrets:
     type: Opaque
 service:
   clusterIP: None
-  enabled: true
   ports:
     postgres:
       port: 5432
       targetPort: postgres
-  type: ClusterIP
 volumeClaimTemplates:
   data:
     accessModes:
