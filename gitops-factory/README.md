@@ -11,6 +11,7 @@ stress-test the conversion at scale (5 namespaces x 50 microservices).
 |---|---|
 | `convert_to_universal_chart.py` | The whole pipeline in one script: raw YAML in, Helm values + ApplicationSets out, then (unless `--skip-verify`) every generated release is rendered for real with `helm template` and checked so no two releases claim the same Kubernetes resource. |
 | `values_editor.py` | Values-authoring/editing CLI for microservices you're adding or tuning **by hand** (not converted from a raw dump) — defaults.yaml-aware, so it never asks you to duplicate what a lower layer already covers. See [values_editor.py — hand-authoring microservices](#values_editorpy--hand-authoring-microservices). |
+| `ui/multi-app-manager.html` | The same idea as `values_editor.py`, as a browser UI — open multiple apps' output trees side by side, browse/edit visually, no install. See [ui/multi-app-manager.html — browser UI](#uimulti-app-managerhtml--browser-ui). |
 | `generate_mock_environment.py` | Generates a large, deliberately messy mock raw-dump fixture. |
 
 ## Input contract
@@ -181,6 +182,66 @@ dotted path (e.g. `resources.limits.memory`, `podSecurityContext.runAsUser`)
 for anything without a dedicated flag — the value is parsed as YAML, so
 `80` becomes an int, `true` a bool, `[a,b]`/`{a: 1}` a real list/dict, and
 anything else stays a plain string.
+
+## ui/multi-app-manager.html — browser UI
+
+The same idea as `values_editor.py`, as a single self-contained HTML file —
+open it directly in **Chrome or Edge** (no server, no install, no build
+step). It reads and writes real files on your machine via the browser's
+[File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API)
+— nothing is uploaded anywhere, and it works fully offline (the YAML parser
+it depends on, [js-yaml](https://github.com/nodeca/js-yaml), is vendored
+inline in the file, not fetched from a CDN).
+
+**"+ Open App Folder"** picks a local directory — the same `<app-dir>` shape
+`values_editor.py` operates on — and adds it as a tab. Open **multiple** app
+folders at once (the multi-app-repo architecture this whole project is built
+around) and switch between them with the tabs at the top.
+
+Within an app: the sidebar lists namespaces (with how many keys each
+`defaults.yaml` covers) and, once expanded, its microservices plus a
+**"+ New microservice"** entry. Selecting a microservice gives you four
+views:
+
+- **Effective (merged)** — read-only, exactly what `values_editor.py show`
+  prints: global defaults → namespace defaults → values → minimal, merged.
+- **Values** / **Minimal** — the raw YAML for that file, editable directly,
+  saved straight back to disk.
+- **Form editor** — structured fields mirroring `values_editor.py new`'s
+  flags (image, ports, service ports, route host, resources, replicas,
+  literal env vars). Pre-filled from the effective values when editing an
+  existing microservice. On save, anything you entered that's identical to
+  what `defaults.yaml` already supplies is reported and **left out** of the
+  file that gets written — the same no-duplication guarantee as the CLI,
+  just visual.
+
+Browser support note: File System Access API is Chromium-only (Chrome,
+Edge) as of this writing — Firefox and Safari aren't supported. The page
+detects this and tells you plainly rather than failing silently.
+
+### Testing this file
+
+Since it can't be driven by the CLI-oriented tools elsewhere in this repo,
+it has its own test setup:
+
+```bash
+npm install jsdom          # dev-only, not a runtime dependency of the page itself
+node ui/core-logic.test.js # pure-JS unit tests for the deepMerge/subtractDefaults
+                            # logic embedded in the page — mirrors
+                            # convert_to_universal_chart.py's deep_merge /
+                            # common_subtree / subtract_defaults; keep these in
+                            # sync if either side changes
+node ui/e2e-test.js <path-to-an-app-dir-copy>
+                            # loads the REAL html/js into jsdom, wraps a real
+                            # directory on disk behind a minimal File System
+                            # Access API-compatible adapter, and drives it
+                            # exactly like a browser would (opens the app,
+                            # views effective values, edits an existing
+                            # microservice via both the form and the raw YAML
+                            # tab, creates a new one) - point it at a
+                            # disposable COPY of an app-dir, since it writes
+                            # real files
+```
 
 ## Why it's conflict-free
 
