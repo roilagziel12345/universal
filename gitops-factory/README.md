@@ -10,6 +10,7 @@ stress-test the conversion at scale (5 namespaces x 50 microservices).
 | File | Purpose |
 |---|---|
 | `convert_to_universal_chart.py` | The whole pipeline in one script: raw YAML in, Helm values + ApplicationSets out, then (unless `--skip-verify`) every generated release is rendered for real with `helm template` and checked so no two releases claim the same Kubernetes resource. |
+| `values_editor.py` | Values-authoring/editing CLI for microservices you're adding or tuning **by hand** (not converted from a raw dump) — defaults.yaml-aware, so it never asks you to duplicate what a lower layer already covers. See [values_editor.py — hand-authoring microservices](#values_editorpy--hand-authoring-microservices). |
 | `generate_mock_environment.py` | Generates a large, deliberately messy mock raw-dump fixture. |
 
 ## Input contract
@@ -126,6 +127,60 @@ precedence): `defaults.yaml` → `<namespace>/defaults.yaml` →
 
 Both defaults files are regenerated fresh on every converter run — like the
 values files, treat them as generated output, not something to hand-edit.
+
+## values_editor.py — hand-authoring microservices
+
+`convert_to_universal_chart.py` is for converting an *existing* raw manifest
+dump. `values_editor.py` is for the other case: a microservice you're adding
+or tuning **by hand**, directly into an app's already-converted output tree
+(the `<app-dir>` in the commands below is exactly what one converter run's
+`--output` produces — see [Output layout](#output-layout)). It's
+defaults.yaml-aware, so it never has you duplicate what the global or
+namespace layer already supplies.
+
+```bash
+# See what's already in an app: namespaces, microservices, how many keys
+# each defaults.yaml already covers.
+python values_editor.py list --app-dir output/payments-app
+
+# Print the fully-merged EFFECTIVE values for one microservice — global
+# defaults -> namespace defaults -> values -> minimal, exactly what would
+# actually deploy.
+python values_editor.py show --app-dir output/payments-app \
+    --namespace dev --name checkout
+
+# Scaffold a brand-new microservice. Anything you set here that's already
+# identical to what defaults.yaml supplies is reported and OMITTED from the
+# file it writes — you only ever get the real delta on disk.
+python values_editor.py new --app-dir output/payments-app \
+    --namespace dev --name checkout \
+    --image my-registry/checkout:1.0.0 \
+    --port http:8080 \
+    --service-port http:80:http \
+    --route-host checkout-dev.apps.example.com \
+    --cpu-request 100m --mem-request 128Mi --cpu-limit 500m --mem-limit 256Mi \
+    --env LOG_LEVEL=debug
+
+# Patch a single key on an existing microservice. image.tag and literal
+# (value:, not valueFrom:) env vars are routed to the minimal file
+# automatically, matching the same split convert_to_universal_chart.py
+# itself uses — everything else goes to the comprehensive file.
+python values_editor.py set --app-dir output/payments-app \
+    --namespace dev --name checkout \
+    --key resources.limits.memory --value 512Mi
+
+# Validate every microservice's merged values against the chart's schema,
+# and (with --chart) render each one for real to catch what the schema
+# can't.
+python values_editor.py validate --app-dir output/payments-app \
+    --schema ../Universal-chart/values.schema.json --chart ../Universal-chart
+```
+
+`new` and `set` both use `--set`/generic `--key`/`--value` flags for a
+dotted path (e.g. `resources.limits.memory`, `podSecurityContext.runAsUser`)
+for anything without a dedicated flag — the value is parsed as YAML, so
+`80` becomes an int, `true` a bool, `[a,b]`/`{a: 1}` a real list/dict, and
+anything else stays a plain string.
 
 ## Why it's conflict-free
 
