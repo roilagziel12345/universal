@@ -1,0 +1,222 @@
+name: Renovate scoped validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Detect changed manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.scope.outputs.matrix }}
+      has-build: ${{ steps.scope.outputs.has_build }}
+      summary: ${{ steps.scope.outputs.summary }}
+    steps:
+      - name: Check out pull request head
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Build validation matrix
+        id: scope
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ "$HEAD_REF" == renovate/* ]]; then
+            git diff --name-status -z "$BASE_SHA" "$HEAD_SHA" > "$RUNNER_TEMP/renovate-changes"
+            node .github/renovate/plan-validation.mjs \
+              --git-diff "$RUNNER_TEMP/renovate-changes" \
+              --github-output "$GITHUB_OUTPUT"
+          else
+            node .github/renovate/plan-validation.mjs \
+              --empty \
+              --github-output "$GITHUB_OUTPUT"
+          fi
+
+  validate:
+    name: Validate ${{ matrix.language }} (${{ matrix.directory }})
+    needs: plan
+    if: needs.plan.result == 'success' && needs.plan.outputs.has-build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - name: Check out pull request head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        if: matrix.language == 'node'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Set up Java
+        if: matrix.language == 'maven' || matrix.language == 'gradle'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Python
+        if: matrix.language == 'poetry' || matrix.language == 'pipenv' || matrix.language == 'pip'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Validate Node.js project
+        if: matrix.language == 'node'
+        shell: bash
+        env:
+          TARGET_DIRECTORY: ${{ matrix.directory }}
+        run: |
+          set -euo pipefail
+          target="$GITHUB_WORKSPACE/$TARGET_DIRECTORY"
+          install_root="$target"
+          cursor="$target"
+          manager=npm
+          while [[ "$cursor" == "$GITHUB_WORKSPACE"* ]]; do
+            if [[ -f "$cursor/pnpm-lock.yaml" ]]; then install_root="$cursor"; manager=pnpm; break; fi
+            if [[ -f "$cursor/yarn.lock" ]]; then install_root="$cursor"; manager=yarn; break; fi
+            if [[ -f "$cursor/package-lock.json" || -f "$cursor/npm-shrinkwrap.json" ]]; then install_root="$cursor"; manager=npm; break; fi
+            [[ "$cursor" == "$GITHUB_WORKSPACE" ]] && break
+            cursor="$(dirname "$cursor")"
+          done
+          if [[ "$manager" == pnpm ]]; then
+            corepack enable
+            (cd "$install_root" && pnpm install --frozen-lockfile)
+            if node -e "const p=require(process.argv[1]); process.exit(p.scripts?.test ? 0 : 1)" "$target/package.json"; then
+              (cd "$target" && pnpm test)
+            else
+              echo 'No Node.js test script; dependency install is the check'
+            fi
+          elif [[ "$manager" == yarn ]]; then
+            corepack enable
+            (cd "$install_root" && (yarn install --immutable || yarn install --frozen-lockfile))
+            if node -e "const p=require(process.argv[1]); process.exit(p.scripts?.test ? 0 : 1)" "$target/package.json"; then
+              (cd "$target" && yarn test)
+            else
+              echo 'No Node.js test script; dependency install is the check'
+            fi
+          else
+            if [[ -f "$install_root/package-lock.json" || -f "$install_root/npm-shrinkwrap.json" ]]; then
+              (cd "$install_root" && npm ci --silent)
+            else
+              (cd "$install_root" && npm install --silent)
+            fi
+            if node -e "const p=require(process.argv[1]); process.exit(p.scripts?.test ? 0 : 1)" "$target/package.json"; then
+              (cd "$target" && npm test --silent)
+            else
+              echo 'No Node.js test script; dependency install is the check'
+            fi
+          fi
+
+      - name: Validate Maven project
+        if: matrix.language == 'maven'
+        working-directory: ${{ matrix.directory }}
+        run: mvn -B -q -f pom.xml test
+
+      - name: Validate Gradle project
+        if: matrix.language == 'gradle'
+        working-directory: ${{ matrix.directory }}
+        shell: bash
+        run: |
+          if [[ -f ./gradlew ]]; then
+            bash ./gradlew --no-daemon -q test
+          elif [[ -f "$GITHUB_WORKSPACE/gradlew" ]]; then
+            bash "$GITHUB_WORKSPACE/gradlew" -p "$PWD" --no-daemon -q test
+          else
+            echo 'No Gradle wrapper found in the subproject or repository root' >&2
+            exit 1
+          fi
+
+      - name: Install Poetry
+        if: matrix.language == 'poetry'
+        run: python -m pip install --disable-pip-version-check poetry
+
+      - name: Validate Poetry project
+        if: matrix.language == 'poetry'
+        working-directory: ${{ matrix.directory }}
+        shell: bash
+        run: |
+          poetry install --no-interaction
+          if find . -maxdepth 3 \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then poetry run pytest -q; fi
+
+      - name: Install Pipenv
+        if: matrix.language == 'pipenv'
+        run: python -m pip install --disable-pip-version-check pipenv
+
+      - name: Validate Pipenv project
+        if: matrix.language == 'pipenv'
+        working-directory: ${{ matrix.directory }}
+        shell: bash
+        run: |
+          pipenv install --dev
+          if find . -maxdepth 3 \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then pipenv run pytest -q; fi
+
+      - name: Validate pip project
+        if: matrix.language == 'pip'
+        working-directory: ${{ matrix.directory }}
+        shell: bash
+        env:
+          REQUIREMENTS_FILE: ${{ matrix.manifestName }}
+        run: |
+          python -m pip install -q -r "$REQUIREMENTS_FILE"
+          if find . -maxdepth 3 \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then pytest -q; fi
+
+  renovate-validation:
+    name: Renovate validation gate
+    needs:
+      - plan
+      - validate
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enforce scoped validation result
+        shell: bash
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+          HAS_BUILD: ${{ needs.plan.outputs.has-build }}
+          SCOPE_SUMMARY: ${{ needs.plan.outputs.summary }}
+        run: |
+          echo "Scope: ${SCOPE_SUMMARY:-unavailable}"
+          if [[ "$PLAN_RESULT" != success ]]; then
+            echo "Manifest detection failed: $PLAN_RESULT" >&2
+            exit 1
+          fi
+          if [[ "$HAS_BUILD" == true && "$VALIDATE_RESULT" != success ]]; then
+            echo "Scoped build failed: $VALIDATE_RESULT" >&2
+            exit 1
+          fi
+          if [[ "$HAS_BUILD" != true && "$VALIDATE_RESULT" != skipped ]]; then
+            echo "Unexpected validator result without a build scope: $VALIDATE_RESULT" >&2
+            exit 1
+          fi
+          echo 'Renovate validation passed'
